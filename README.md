@@ -51,18 +51,16 @@ Nothing else.
 
 ## Install
 
-Open Claude Code in any folder. Paste this prompt:
+Paste this into Claude Code:
 
 ```
 Install the open-design skill for me. Clone https://github.com/Sma1lboy/open-design.git into ~/.claude/skills/open-design. If that folder already exists and is the same repo, run git pull there; if it is something else, stop and ask me. After cloning, confirm SKILL.md is in ~/.claude/skills/open-design/open-design, then tell me to restart Claude Code.
 ```
 
-Claude will do the clone, verify the layout, and remind you to restart.
-
 > [!NOTE]
 > Restart Claude Code after install. Claude Code only loads skills when a session starts.
 
-Prefer to run it yourself? Clone the repo into `~/.claude/skills/open-design`, or clone anywhere and run `./install.sh` to make the symlink.
+Prefer to run it yourself? Clone into `~/.claude/skills/open-design`, or clone anywhere and run `./install.sh`.
 
 ---
 
