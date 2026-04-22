@@ -2,12 +2,18 @@
 
 # open-design
 
-> *One prompt. One `design.html`.*
+> *[open-codesign](https://github.com/OpenCoworkAI/open-codesign), as a Claude Code skill.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Skill-blueviolet)](https://claude.ai/code)
 [![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-green)](https://agentskills.io)
 [![Derived from](https://img.shields.io/badge/derived%20from-open--codesign-ff6a33)](https://github.com/OpenCoworkAI/open-codesign)
+
+<br>
+
+**[open-codesign](https://github.com/OpenCoworkAI/open-codesign) is a new design product: you give it a prompt, it gives you a real-looking HTML design.** The upstream ships as an Electron desktop app. This repo is the same product, rebuilt as a Claude Code skill.
+
+Same prompts. Same output quality. No desktop app to install. You use it from any Claude Code session, and `design.html` lands in your current folder.
 
 <br>
 
@@ -19,8 +25,6 @@ Claude writes `design.html` to your current folder.
 You open it. It looks like a real design, not another template.
 
 **That is open-design.**
-
-This is a Claude Code skill. It brings the full prompt setup from [open-codesign](https://github.com/OpenCoworkAI/open-codesign) into Claude Code. The prompts are the same. The output quality is the same. You just do not need their desktop app.
 
 [Install](#install) · [Use](#use) · [Gallery](#gallery) · [vs. open-codesign](#vs-open-codesign) · [Missing](#missing)
 
