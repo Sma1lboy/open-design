@@ -102,6 +102,24 @@ The `.html` file is the only source of truth. There are no patches, no diffs, an
 > [!TIP]
 > Keep the file under git. Each change is then a normal git diff, and you can roll back at any time.
 
+### Use real code or images as reference
+
+You can feed the skill real context. Claude Code is already the import pipeline:
+
+- Paste a JSON config, schema, or code snippet. The design will use the real fields.
+- Type `@path/to/file.ts` to pull a file in.
+- `cd` into a repo before you start. The skill can read the code.
+- Drag a screenshot into the terminal. The design will match the visual reference.
+
+```
+design a settings page for this config: @src/config/schema.ts
+```
+
+```
+redesign this screen. match the brand but fix the density.
+[drag screenshot]
+```
+
 ### What triggers the skill
 
 Triggers that fire:
@@ -167,6 +185,8 @@ open-codesign is a desktop app built with Electron. open-design is a Claude Code
 | 4 built-in sub-skills (pitch-deck / data-viz / mobile-mock / anti-slop) | ✅ | ✅ |
 | Single-file HTML output | ✅ (inside an iframe) | ✅ (written to disk) |
 | Save many designs | ⚠️ one at a time | ✅ `design-1.html`, `design-2.html`, … |
+| Import real code as reference | ✅ (GitHub connector) | ✅ (`@file`, `cd` into repo, paste any text) |
+| Import screenshots as reference | ✅ | ✅ (drag into Claude Code) |
 | Live preview window | ✅ | ❌ — you run `open design.html` |
 | Click an element and rewrite that part | ✅ | ⚠️ — describe the change in words |
 | Sliders for color or spacing | ✅ | ❌ — every change is a full rewrite |
