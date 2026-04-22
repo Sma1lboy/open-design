@@ -15,6 +15,9 @@
 
 Same prompts. Same output quality. No desktop app to install. You use it from any Claude Code session, and `design.html` lands in your current folder.
 
+> [!IMPORTANT]
+> **Everything open-codesign can design, this skill can design.** The prompt layer is 100% the same: same 16-section system prompt, same 12 JSX golden-reference examples, same 4 built-in sub-skills, same anti-slop rules, same craft directives. What the Electron app adds is the desktop UX (preview pane, click-to-edit, sliders, PDF export). The design engine is identical.
+
 <br>
 
 You type:
