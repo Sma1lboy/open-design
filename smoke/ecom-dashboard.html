@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Meridian Commerce — Revenue Operations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --color-bg:        oklch(14% 0.012 255);
+    --color-surface:   oklch(18% 0.014 255);
+    --color-surface-2: oklch(21% 0.015 255);
+    --color-inset:     oklch(16% 0.012 255);
+    --color-line:      oklch(27% 0.015 255);
+    --color-line-2:    oklch(32% 0.018 255);
+    --color-text:      oklch(97% 0.008 85);
+    --color-muted:     oklch(68% 0.018 250);
+    --color-subtle:    oklch(52% 0.018 250);
+    --color-teal:      oklch(72% 0.14 185);
+    --color-teal-deep: oklch(58% 0.15 190);
+    --color-amber:     oklch(78% 0.15 68);
+    --color-violet:    oklch(70% 0.16 295);
+    --color-rose:      oklch(68% 0.18 18);
+    --color-lime:      oklch(82% 0.17 128);
+    --color-green:     oklch(72% 0.16 150);
+    --radius-base:     10px;
+    --radius-lg:       14px;
+    --font-sans:       'DM Sans', system-ui, sans-serif;
+    --font-mono:       'JetBrains Mono', ui-monospace, monospace;
+    --font-display:    'Fraunces', Georgia, serif;
+    --ease-out:        cubic-bezier(0.22, 1, 0.36, 1);
+    --shadow-sm:       0 1px 0 oklch(100% 0 0 / 0.03) inset, 0 8px 24px oklch(0% 0 0 / 0.25);
+  }
+  html, body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-feature-settings: 'ss01', 'cv11';
+    -webkit-font-smoothing: antialiased;
+  }
+  .num { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
+  .mono { font-family: var(--font-mono); }
+  .display { font-family: var(--font-display); letter-spacing: -0.02em; }
+  .eyebrow { font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-subtle); font-weight: 500; }
+  .panel { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+  .hairline { border-color: var(--color-line); }
+  .kpi-bar { position:absolute; left:0; top:16px; bottom:16px; width:3px; border-radius:2px; }
+  .pulse { animation: pulse 2s var(--ease-out) infinite; }
+  .pulse-ring { animation: pulseRing 2.2s var(--ease-out) infinite; }
+  .fade-up { animation: fadeUp 520ms var(--ease-out) both; }
+  .shimmer { background-image: linear-gradient(90deg, transparent, oklch(100% 0 0 / 0.06), transparent); background-size: 200% 100%; animation: shimmer 1.6s linear infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
+  @keyframes pulseRing { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(2.4); opacity: 0; } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  @keyframes tickIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+  .tick-in { animation: tickIn 360ms var(--ease-out) both; }
+  button, a { transition: transform 120ms var(--ease-out), background-color 120ms, box-shadow 160ms, color 120ms, border-color 120ms; }
+  button:hover, a:hover { transform: translateY(-1px); }
+  button:active { transform: scale(0.97); }
+  button:focus-visible, a:focus-visible { outline: 2px solid var(--color-teal); outline-offset: 2px; border-radius: 6px; }
+  .chip { background: var(--color-inset); border:1px solid var(--color-line); color: var(--color-muted); }
+  .chip[data-active="true"] { background: oklch(from var(--color-teal) l c h / 0.12); color: var(--color-teal); border-color: oklch(from var(--color-teal) l c h / 0.35); }
+  .scrollfade { mask-image: linear-gradient(to bottom, transparent, black 6%, black 94%, transparent); }
+  .dot { width: 7px; height: 7px; border-radius: 999px; display:inline-block; }
+  .row-hover:hover { background: var(--color-inset); }
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+  details[open] .caret { transform: rotate(90deg); }
+  .caret { transition: transform 160ms var(--ease-out); }
+  .hm-cell { transition: transform 140ms var(--ease-out), filter 140ms var(--ease-out); }
+  .hm-cell:hover { transform: scale(1.08); filter: brightness(1.25); z-index: 2; }
+  .tooltip { position: absolute; pointer-events: none; background: oklch(22% 0.014 255); border: 1px solid var(--color-line-2); color: var(--color-text); font-size: 11px; padding: 6px 9px; border-radius: 6px; opacity: 0; transform: translate(-50%, -120%); transition: opacity 120ms; white-space: nowrap; z-index: 30; }
+  .hm-cell:hover + .tooltip { opacity: 1; }
+  .grad-hero { background:
+    radial-gradient(1200px 480px at 8% -10%, oklch(from var(--color-teal-deep) l c h / 0.10), transparent 60%),
+    radial-gradient(900px 420px at 100% 0%, oklch(from var(--color-amber) l c h / 0.06), transparent 55%),
+    var(--color-bg);
+  }
+  .side-accent { box-shadow: inset 3px 0 0 var(--color-teal); }
+  .grid-bg { background-image: linear-gradient(oklch(100% 0 0 / 0.02) 1px, transparent 1px), linear-gradient(90deg, oklch(100% 0 0 / 0.02) 1px, transparent 1px); background-size: 28px 28px; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body class="min-h-screen grad-hero">
+
+<!-- TOP BAR -->
+<header class="sticky top-0 z-40 backdrop-blur-xl bg-[color:oklch(14%_0.012_255/0.78)] border-b border-[color:var(--color-line)]">
+  <div class="max-w-[1440px] mx-auto px-6 h-14 flex items-center gap-6">
+    <div class="flex items-center gap-2.5">
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 18 L12 3 L21 18 Z" fill="none" stroke="oklch(72% 0.14 185)" stroke-width="1.6"/>
+        <path d="M7.5 14 L12 6.5 L16.5 14" fill="none" stroke="oklch(78% 0.15 68)" stroke-width="1.6"/>
+      </svg>
+      <span class="display text-[15px] font-semibold tracking-tight">Meridian</span>
+      <span class="mono text-[10.5px] text-[color:var(--color-subtle)] ml-1">v4.12</span>
+    </div>
+    <nav class="hidden md:flex items-center gap-1 ml-4">
+      <a href="#" class="px-2.5 py-1.5 text-[13px] text-[color:var(--color-text)] rounded-md bg-[color:var(--color-inset)] border border-[color:var(--color-line)]">Revenue</a>
+      <a href="#" class="px-2.5 py-1.5 text-[13px] text-[color:var(--color-muted)] hover:text-[color:var(--color-text)] rounded-md">Orders</a>
+      <a href="#" class="px-2.5 py-1.5 text-[13px] text-[color:var(--color-muted)] hover:text-[color:var(--color-text)] rounded-md">Catalog</a>
+      <a href="#" class="px-2.5 py-1.5 text-[13px] text-[color:var(--color-muted)] hover:text-[color:var(--color-text)] rounded-md">Customers</a>
+      <a href="#" class="px-2.5 py-1.5 text-[13px] text-[color:var(--color-muted)] hover:text-[color:var(--color-text)] rounded-md">Marketing</a>
+      <a href="#" class="px-2.5 py-1.5 text-[13px] text-[color:var(--color-muted)] hover:text-[color:var(--color-text)] rounded-md">Ops</a>
+    </nav>
+    <div class="flex-1"></div>
+    <button class="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-[color:var(--color-inset)] border border-[color:var(--color-line)] text-[12.5px] text-[color:var(--color-muted)] hover:text-[color:var(--color-text)]" onclick="toast('Command palette (demo only)')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span>Search orders, SKUs, customers</span>
+      <span class="mono text-[10px] px-1.5 py-0.5 rounded border border-[color:var(--color-line)] ml-6">⌘K</span>
+    </button>
+    <div class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-full border border-[color:var(--color-line)] bg-[color:var(--color-inset)]">
+      <span class="relative flex">
+        <span class="dot bg-[color:var(--color-lime)]"></span>
+        <span class="absolute inset-0 rounded-full bg-[color:var(--color-lime)] pulse-ring" aria-hidden="true"></span>
+      </span>
+      <span class="mono text-[10.5px] tracking-[0.14em] text-[color:var(--color-muted)]">LIVE</span>
+      <span id="clock" class="mono text-[11.5px] text-[color:var(--color-text)] num">—</span>
+    </div>
+    <button class="size-8 rounded-full bg-[color:oklch(62%_0.08_25)] text-[11.5px] font-semibold text-black" title="Priya Ramanathan · Revenue lead">PR</button>
+  </div>
+</header>
+
+<main class="max-w-[1440px] mx-auto px-6 py-6 fade-up">
+
+  <!-- TITLE ROW + FILTERS -->
+  <section class="flex flex-wrap items-end justify-between gap-4 mb-5">
+    <div>
+      <div class="eyebrow">Revenue Operations · Global</div>
+      <h1 class="display text-[34px] leading-[1.05] font-semibold mt-1.5">Books closing — week 16, 2026</h1>
+      <p class="text-[13.5px] text-[color:var(--color-muted)] mt-1.5 num">Tracking <span class="text-[color:var(--color-text)]">248,917</span> orders across <span class="text-[color:var(--color-text)]">32 storefronts</span> · last sync <span id="syncAgo">6s ago</span></p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="inline-flex rounded-lg p-0.5 border border-[color:var(--color-line)] bg-[color:var(--color-inset)]" role="tablist" aria-label="Time range">
+        <button data-range="7D" class="chip rounded-md px-2.5 py-1 text-[12px] font-medium">7D</button>
+        <button data-range="30D" class="chip rounded-md px-2.5 py-1 text-[12px] font-medium" data-active="true">30D</button>
+        <button data-range="90D" class="chip rounded-md px-2.5 py-1 text-[12px] font-medium">90D</button>
+        <button data-range="YTD" class="chip rounded-md px-2.5 py-1 text-[12px] font-medium">YTD</button>
+      </div>
+      <button class="chip rounded-md px-2.5 py-1.5 text-[12px] flex items-center gap-1.5" onclick="toast('Filters drawer (demo only)')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+        Segment: All channels
+      </button>
+      <button class="chip rounded-md px-2.5 py-1.5 text-[12px] flex items-center gap-1.5" onclick="toast('Compared to Mar 18 – Apr 16')">
+        vs previous 30D
+      </button>
+      <button class="rounded-md px-3 py-1.5 text-[12px] font-medium bg-[color:var(--color-teal)] text-black hover:bg-[color:var(--color-teal-deep)] hover:text-white" onclick="toast('Export queued — CSV + Parquet')">Export</button>
+    </div>
+  </section>
+
+  <!-- KPI STRIP -->
+  <section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" aria-label="Key performance indicators">
+    <article class="panel relative p-4 pl-5" style="--bar: var(--color-teal)">
+      <span class="kpi-bar" style="background: var(--color-teal)"></span>
+      <div class="eyebrow">Gross revenue · 30D</div>
+      <div class="flex items-baseline gap-2 mt-2">
+        <span class="display text-[30px] font-bold num">$14.82M</span>
+      </div>
+      <div class="flex items-center justify-between mt-2.5">
+        <div class="flex items-center gap-1.5 text-[12px] text-[color:var(--color-lime)] num">
+          <svg width="11" height="11" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 1.5 L9 7 H1 Z"/></svg>
+          +18.2% vs prev 30D
+        </div>
+        <svg width="72" height="24" viewBox="0 0 72 24" aria-hidden="true">
+          <path d="M0,19 L8,16 L16,17 L24,13 L32,14 L40,9 L48,11 L56,6 L64,7 L72,3" fill="none" stroke="oklch(72% 0.14 185)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </article>
+    <article class="panel relative p-4 pl-5">
+      <span class="kpi-bar" style="background: var(--color-amber)"></span>
+      <div class="eyebrow">Orders</div>
+      <div class="flex items-baseline gap-2 mt-2"><span class="display text-[30px] font-bold num">89,412</span></div>
+      <div class="flex items-center justify-between mt-2.5">
+        <div class="flex items-center gap-1.5 text-[12px] text-[color:var(--color-lime)] num">
+          <svg width="11" height="11" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 1.5 L9 7 H1 Z"/></svg>
+          +12.4%
+        </div>
+        <svg width="72" height="24" viewBox="0 0 72 24" aria-hidden="true">
+          <path d="M0,18 L8,15 L16,19 L24,14 L32,15 L40,11 L48,12 L56,9 L64,10 L72,6" fill="none" stroke="oklch(78% 0.15 68)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </article>
+    <article class="panel relative p-4 pl-5">
+      <span class="kpi-bar" style="background: var(--color-violet)"></span>
+      <div class="eyebrow">Avg order value</div>
+      <div class="flex items-baseline gap-2 mt-2"><span class="display text-[30px] font-bold num">$165.79</span></div>
+      <div class="flex items-center justify-between mt-2.5">
+        <div class="flex items-center gap-1.5 text-[12px] text-[color:var(--color-lime)] num">
+          <svg width="11" height="11" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 1.5 L9 7 H1 Z"/></svg>
+          +5.1%
+        </div>
+        <svg width="72" height="24" viewBox="0 0 72 24" aria-hidden="true">
+          <path d="M0,15 L8,14 L16,16 L24,13 L32,14 L40,12 L48,13 L56,10 L64,11 L72,9" fill="none" stroke="oklch(70% 0.16 295)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </article>
+    <article class="panel relative p-4 pl-5">
+      <span class="kpi-bar" style="background: var(--color-rose)"></span>
+      <div class="eyebrow">Refund rate</div>
+      <div class="flex items-baseline gap-2 mt-2"><span class="display text-[30px] font-bold num">2.14%</span></div>
+      <div class="flex items-center justify-between mt-2.5">
+        <div class="flex items-center gap-1.5 text-[12px] text-[color:var(--color-rose)] num">
+          <svg width="11" height="11" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 8.5 L1 3 H9 Z"/></svg>
+          +0.3 pts
+        </div>
+        <svg width="72" height="24" viewBox="0 0 72 24" aria-hidden="true">
+          <path d="M0,14 L8,15 L16,13 L24,16 L32,14 L40,17 L48,15 L56,18 L64,17 L72,19" fill="none" stroke="oklch(68% 0.18 18)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </article>
+  </section>
+
+  <!-- PRIMARY CHART + BREAKDOWN -->
+  <section class="grid grid-cols-1 xl:grid-cols-[2.15fr_1fr] gap-4 mb-4">
+    <article class="panel p-5">
+      <header class="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <div class="eyebrow">Revenue over time</div>
+          <h2 class="text-[17px] font-semibold mt-0.5">Gross vs net, hourly · last 30 days</h2>
+          <p class="text-[12px] text-[color:var(--color-muted)] mt-1 num">USD · aggregated across 32 storefronts · <span class="text-[color:var(--color-text)]">peak 04-19 14:00</span> at <span class="text-[color:var(--color-text)]">$84,612</span></p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="flex items-center gap-1.5 text-[11.5px] text-[color:var(--color-muted)]"><span class="dot" style="background: var(--color-teal)"></span>Gross</span>
+          <span class="flex items-center gap-1.5 text-[11.5px] text-[color:var(--color-muted)]"><span class="dot" style="background: var(--color-amber)"></span>Net of refunds</span>
+          <span class="mono text-[10px] px-1.5 py-0.5 rounded border border-[color:var(--color-line-2)] text-[color:var(--color-lime)]">LIVE</span>
+        </div>
+      </header>
+      <div class="relative h-[300px]">
+        <canvas id="revChart" aria-label="Revenue over time — gross versus net, hourly over 30 days"></canvas>
+      </div>
+      <footer class="mt-4 pt-4 border-t hairline grid grid-cols-4 gap-4 text-[12px]">
+        <div>
+          <div class="eyebrow">Gross · period</div>
+          <div class="font-semibold num mt-1 text-[15px]">$14,820,445</div>
+        </div>
+        <div>
+          <div class="eyebrow">Refunds</div>
+          <div class="font-semibold num mt-1 text-[15px]">$317,218</div>
+        </div>
+        <div>
+          <div class="eyebrow">Net</div>
+          <div class="font-semibold num mt-1 text-[15px]">$14,503,227</div>
+        </div>
+        <div>
+          <div class="eyebrow">Forecast · wk 17</div>
+          <div class="font-semibold num mt-1 text-[15px]">$3.81M <span class="text-[color:var(--color-muted)] font-normal">± 4.2%</span></div>
+        </div>
+      </footer>
+    </article>
+
+    <article class="panel p-5">
+      <header class="flex items-center justify-between mb-4">
+        <div>
+          <div class="eyebrow">Channel mix</div>
+          <h2 class="text-[17px] font-semibold mt-0.5">Where revenue landed</h2>
+        </div>
+        <button class="mono text-[10.5px] text-[color:var(--color-subtle)] hover:text-[color:var(--color-text)]" onclick="toast('Attribution model: last-touch, 14d')">model ↗</button>
+      </header>
+      <div class="relative h-[170px] flex items-center justify-center">
+        <canvas id="channelChart" aria-label="Channel mix — direct, organic, paid, referral, marketplaces"></canvas>
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <div class="display text-[26px] font-bold num">$14.82M</div>
+          <div class="eyebrow mt-0.5">5 channels</div>
+        </div>
+      </div>
+      <ul class="mt-4 space-y-2.5">
+        <li class="flex items-center gap-3 text-[12.5px]"><span class="dot" style="background: var(--color-teal)"></span><span class="flex-1">Direct / brand</span><span class="num text-[color:var(--color-muted)]">38.2%</span><span class="num font-semibold w-20 text-right">$5.66M</span></li>
+        <li class="flex items-center gap-3 text-[12.5px]"><span class="dot" style="background: var(--color-amber)"></span><span class="flex-1">Paid search (Google, Bing)</span><span class="num text-[color:var(--color-muted)]">22.7%</span><span class="num font-semibold w-20 text-right">$3.36M</span></li>
+        <li class="flex items-center gap-3 text-[12.5px]"><span class="dot" style="background: var(--color-violet)"></span><span class="flex-1">Organic search</span><span class="num text-[color:var(--color-muted)]">17.4%</span><span class="num font-semibold w-20 text-right">$2.58M</span></li>
+        <li class="flex items-center gap-3 text-[12.5px]"><span class="dot" style="background: var(--color-green)"></span><span class="flex-1">Marketplaces (Amazon, Target+)</span><span class="num text-[color:var(--color-muted)]">13.9%</span><span class="num font-semibold w-20 text-right">$2.06M</span></li>
+        <li class="flex items-center gap-3 text-[12.5px]"><span class="dot" style="background: var(--color-rose)"></span><span class="flex-1">Social + influencer</span><span class="num text-[color:var(--color-muted)]">7.8%</span><span class="num font-semibold w-20 text-right">$1.16M</span></li>
+      </ul>
+    </article>
+  </section>
+
+  <!-- TOP PRODUCTS + COHORT -->
+  <section class="grid grid-cols-1 xl:grid-cols-[1fr_1.25fr] gap-4 mb-4">
+    <!-- TOP PRODUCTS -->
+    <article class="panel p-5">
+      <header class="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <div class="eyebrow">Top products</div>
+          <h2 class="text-[17px] font-semibold mt-0.5">By gross revenue · 30D</h2>
+          <p class="text-[12px] text-[color:var(--color-muted)] mt-1">8 of 4,218 SKUs shown</p>
+        </div>
+        <div class="flex items-center gap-1 text-[11px]">
+          <button class="chip rounded-md px-2 py-1" data-active="true">Revenue</button>
+          <button class="chip rounded-md px-2 py-1" onclick="toast('Sorted by units (demo only)')">Units</button>
+          <button class="chip rounded-md px-2 py-1" onclick="toast('Sorted by margin (demo only)')">Margin</button>
+        </div>
+      </header>
+      <table class="w-full text-[12.5px]">
+        <thead>
+          <tr class="text-[10.5px] uppercase tracking-[0.12em] text-[color:var(--color-subtle)]">
+            <th class="text-left font-medium pb-2 w-10">#</th>
+            <th class="text-left font-medium pb-2">SKU · Title</th>
+            <th class="text-right font-medium pb-2">Units</th>
+            <th class="text-right font-medium pb-2">Revenue</th>
+            <th class="text-right font-medium pb-2">Δ 30D</th>
+          </tr>
+        </thead>
+        <tbody class="num">
+          <!-- Product rows with horizontal bar overlays -->
+          <tr class="row-hover border-t hairline">
+            <td class="py-2.5 mono text-[color:var(--color-subtle)]">01</td>
+            <td class="py-2.5">
+              <div class="relative">
+                <div class="absolute inset-y-1 left-0 rounded" style="width: 100%; background: linear-gradient(90deg, oklch(from var(--color-teal) l c h / 0.18), transparent 92%);"></div>
+                <div class="relative">
+                  <div class="font-medium text-[color:var(--color-text)]">Helios Field Jacket — Olive</div>
+                  <div class="mono text-[10.5px] text-[color:var(--color-subtle)]">HLS-FJ-OL-M · Outerwear</div>
+                </div>
+              </div>
+            </td>
+            <td class="text-right py-2.5">4,218</td>
+            <td class="text-right py-2.5 font-semibold">$1,284,660</td>
+            <td class="text-right py-2.5 text-[color:var(--color-lime)]">+24.1%</td>
+          </tr>
+          <tr class="row-hover border-t hairline">
+            <td class="py-2.5 mono text-[color:var(--color-subtle)]">02</td>
+            <td class="py-2.5">
+              <div class="relative">
+                <div class="absolute inset-y-1 left-0 rounded" style="width: 82%; background: linear-gradient(90deg, oklch(from var(--color-teal) l c h / 0.16), transparent 92%);"></div>
+                <div class="relative">
+                  <div class="font-medium">Terra Ceramic Mug — Raw Clay (Set of 4)</div>
+                  <div class="mono text-[10.5px] text-[color:var(--color-subtle)]">TRR-MG-RC-4P · Kitchen</div>
+                </div>
+              </div>
+            </td>
+            <td class="text-right py-2.5">9,811</td>
+            <td class="text-right py-2.5 font-semibold">$1,052,807</td>
+            <td class="text-right py-2.5 text-[color:var(--color-lime)]">+18.6%</td>
+          </tr>
+          <tr class="row-hover border-t hairline">
+            <td class="py-2.5 mono text-[color:var(--color-subtle)]">03</td>
+            <td class="py-2.5">
+              <div class="relative">
+                <div class="absolute inset-y-1 left-0 rounded" style="width: 71%; background: linear-gradient(90deg, oklch(from var(--color-teal) l c h / 0.14), transparent 92%);"></div>
+                <div class="relative">
+                  <div class="font-medium">Oakwell Merino Crew — Ink Navy</div>
+                  <div class="mono text-[10.5px] text-[color:var(--color-subtle)]">OKW-MRN-IN-L · Knitwear</div>
+                </div>
+              </div>
+            </td>
+            <td class="text-right py-2.5">6,402</td>
+            <td class="text-right py-2.5 font-semibold">$918,327</td>
+            <td class="text-right py-2.5 text-[color:var(--color-lime)]">+9.4%</td>
+          </tr>
+          <tr class="row-hover border-t hairline">
+            <td class="py-2.5 mono text-[color:var(--color-subtle)]">04</td>
+            <td class="py-2.5">
+              <div class="relative">
+                <div class="absolute inset-y-1 left-0 rounded" style="width: 62%; background: linear-gradient(90deg, oklch(from var(--color-teal) l c h / 0.13), transparent 92%);"></div>
+                <div class="relative">
+                  <div class="font-medium">Driftline 28L Pack — Graphite</div>
+                  <div class="mono text-[10.5px] text-[color:var(--color-subtle)]">DFT-28L-GR · Bags</div>
+                </div>
+              </div>
+            </td>
+            <td class="text-right py-2.5">3,104</td>
+            <td class="text-right py-2.5 font-semibold">$797,712</td>
+            <td class="text-right py-2.5 text-[color:var(--color-rose)]">−2.8%</td>
+          </tr>
+          <tr class="row-hover border-t hairline">
+            <td class="py-2.5 mono text-[color:var(--color-subtle)]">05</td>
+            <td class="py-2.5">
+              <div class="relative">
+                <div class="absolute inset-y-1 left-0 rounded" style="width: 54%; background: linear-gradient(90deg, oklch(from var(--color-teal) l c h / 0.11), transparent 92%);"></div>
+                <div class="relative">
+                  <div class="font-medium">Kitayama Whisk &amp; Chasen Set</div>
+                  <div class="mono text-[10.5px] text-[color:var(--color-subtle)]">KTY-WH-SET · Tea</div>
+                </div>
+              </div>
+            </td>
+            <td class="text-right py-2.5">2,204</td>
+            <td class="text-right py-2.5 font-semibold">$693,060</td>
+            <td class="text-right py-2.5 text-[color:var(--color-lime)]">+31.7%</td>
+          </tr>
+          <tr class="row-hover border-t hairline">
+            <td class="py-2.5 mono text-[color:var(--color-subtle)]">06</td>
+            <td class="py-2.5">
+              <div class="relative">
+                <div class="absolute inset-y-1 left-0 rounded" style="width: 47%; background: linear-gradient(90deg, oklch(from var(--color-teal) l c h / 0.10), transparent 92%);"></div>
+                <div class="relative">
+                  <div class="font-medium">Auroch Leather Belt — Cognac</div>
+                  <div class="mono text-[10.5px] text-[color:var(--color-subtle)]">ARC-BLT-CG-34 · Accessories</div>
+                </div>
+              </div>
+            </td>
+            <td class="text-right py-2.5">5,817</td>
+            <td class="text-right py-2.5 font-semibold">$601,755</td>
+            <td class="text-right py-2.5 text-[color:var(--color-lime)]">+6.2%</td>
+          </tr>
+          <tr class="row-hover border-t hairline">
+            <td class="py-2.5 mono text-[color:var(--color-subtle)]">07</td>
+            <td class="py-2.5">
+              <div class="relative">
+                <div class="absolute inset-y-1 left-0 rounded" style="width: 39%; background: linear-gradient(90deg, oklch(from var(--color-teal) l c h / 0.09), transparent 92%);"></div>
+                <div class="relative">
+                  <div class="font-medium">Northspire Down Parka — Slate</div>
+                  <div class="mono text-[10.5px] text-[color:var(--color-subtle)]">NSP-PRK-SL-L · Outerwear</div>
+                </div>
+              </div>
+            </td>
+            <td class="text-right py-2.5">1,088</td>
+            <td class="text-right py-2.5 font-semibold">$498,432</td>
+            <td class="text-right py-2.5 text-[color:var(--color-rose)]">−11.4%</td>
+          </tr>
+          <tr class="row-hover border-t hairline">
+            <td class="py-2.5 mono text-[color:var(--color-subtle)]">08</td>
+            <td class="py-2.5">
+              <div class="relative">
+                <div class="absolute inset-y-1 left-0 rounded" style="width: 32%; background: linear-gradient(90deg, oklch(from var(--color-teal) l c h / 0.08), transparent 92%);"></div>
+                <div class="relative">
+                  <div class="font-medium">Furrow Linen Apron — Rust</div>
+                  <div class="mono text-[10.5px] text-[color:var(--color-subtle)]">FRW-APR-RS · Home</div>
+                </div>
+              </div>
+            </td>
+            <td class="text-right py-2.5">4,509</td>
+            <td class="text-right py-2.5 font-semibold">$410,319</td>
+            <td class="text-right py-2.5 text-[color:var(--color-lime)]">+14.8%</td>
+          </tr>
+        </tbody>
+      </table>
+      <details class="mt-3 border-t hairline pt-3">
+        <summary class="flex items-center gap-2 text-[12px] text-[color:var(--color-muted)] hover:text-[color:var(--color-text)]">
+          <span class="caret">›</span> See 4,210 more SKUs — long-tail tracking
+        </summary>
+        <div class="mt-3 text-[12px] text-[color:var(--color-muted)] grid grid-cols-2 gap-y-1.5 num">
+          <span>Median SKU revenue</span><span class="text-right">$1,840</span>
+          <span>SKUs with zero sales · 30D</span><span class="text-right">612 <span class="text-[color:var(--color-subtle)]">(14.5%)</span></span>
+          <span>Long-tail revenue share</span><span class="text-right">41.3%</span>
+        </div>
+      </details>
+    </article>
+
+    <!-- COHORT HEATMAP -->
+    <article class="panel p-5">
+      <header class="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <div class="eyebrow">Cohort retention</div>
+          <h2 class="text-[17px] font-semibold mt-0.5">Second-purchase rate by acquisition month</h2>
+          <p class="text-[12px] text-[color:var(--color-muted)] mt-1">% of cohort that placed another order within N months · Nov 2025 – Apr 2026</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="mono text-[10.5px] text-[color:var(--color-subtle)]">scale</span>
+          <svg width="96" height="10" viewBox="0 0 96 10" aria-hidden="true">
+            <defs><linearGradient id="scaleGrad" x1="0" x2="1"><stop offset="0" stop-color="oklch(22% 0.01 255)"/><stop offset="1" stop-color="oklch(72% 0.14 185)"/></linearGradient></defs>
+            <rect x="0" y="0" width="96" height="10" rx="2" fill="url(#scaleGrad)"/>
+          </svg>
+          <span class="mono text-[10.5px] text-[color:var(--color-subtle)]">0 → 62%</span>
+        </div>
+      </header>
+
+      <div class="overflow-x-auto scrollfade">
+        <table class="text-[11px] num w-full min-w-[520px]" id="cohortTable">
+          <thead>
+            <tr class="text-[10px] uppercase tracking-[0.12em] text-[color:var(--color-subtle)]">
+              <th class="text-left font-medium pr-2 pb-2 w-24">Cohort</th>
+              <th class="text-right font-medium pr-2 pb-2">Size</th>
+              <th class="font-medium pb-2 text-center" colspan="9">Months since first purchase →</th>
+            </tr>
+            <tr class="text-[10px] text-[color:var(--color-subtle)]">
+              <th></th><th></th>
+              <th class="pb-2 w-8 text-center">M0</th>
+              <th class="pb-2 w-8 text-center">M1</th>
+              <th class="pb-2 w-8 text-center">M2</th>
+              <th class="pb-2 w-8 text-center">M3</th>
+              <th class="pb-2 w-8 text-center">M4</th>
+              <th class="pb-2 w-8 text-center">M5</th>
+              <th class="pb-2 w-8 text-center">M6</th>
+              <th class="pb-2 w-8 text-center">M7</th>
+              <th class="pb-2 w-8 text-center">M8</th>
+            </tr>
+          </thead>
+          <tbody id="cohortBody"></tbody>
+          <tfoot>
+            <tr class="text-[10.5px] text-[color:var(--color-subtle)]">
+              <td colspan="11" class="pt-3 border-t hairline mt-2">
+                <div class="flex flex-wrap gap-4">
+                  <span>Best: <span class="text-[color:var(--color-teal)] font-semibold">Nov-25 · 61.8% at M3</span></span>
+                  <span>Watch: <span class="text-[color:var(--color-rose)] font-semibold">Feb-26 M1 −7pts</span> post promo wind-down</span>
+                  <span>Avg M1: <span class="text-[color:var(--color-text)] font-semibold">38.4%</span></span>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <!-- LIVE ORDERS + GEO + ALERTS -->
+  <section class="grid grid-cols-1 xl:grid-cols-[1.35fr_1fr] gap-4 mb-4">
+    <article class="panel p-5">
+      <header class="flex items-center justify-between gap-3 mb-4">
+        <div class="flex items-center gap-3">
+          <div>
+            <div class="eyebrow">Live orders</div>
+            <h2 class="text-[17px] font-semibold mt-0.5 flex items-center gap-2">Streaming feed
+              <span class="relative flex"><span class="dot bg-[color:var(--color-rose)] pulse"></span></span>
+            </h2>
+          </div>
+        </div>
+        <div class="flex items-center gap-1 text-[11px]">
+          <button class="chip rounded-md px-2 py-1" data-active="true">All</button>
+          <button class="chip rounded-md px-2 py-1" onclick="filterFeed('paid')">Paid</button>
+          <button class="chip rounded-md px-2 py-1" onclick="filterFeed('refund')">Refunds</button>
+          <button class="chip rounded-md px-2 py-1" onclick="filterFeed('risk')">Risk flags</button>
+          <span class="mono text-[10.5px] text-[color:var(--color-subtle)] ml-2 num" id="feedRate">~14 / min</span>
+        </div>
+      </header>
+      <div class="scrollfade max-h-[360px] overflow-hidden">
+        <ul id="feed" class="divide-y hairline">
+          <!-- Rows injected by JS, seeded with initial entries -->
+        </ul>
+      </div>
+    </article>
+
+    <article class="panel p-5 flex flex-col">
+      <header class="flex items-start justify-between gap-3 mb-3">
+        <div>
+          <div class="eyebrow">Regions · last hour</div>
+          <h2 class="text-[17px] font-semibold mt-0.5">Orders by region</h2>
+        </div>
+        <button class="mono text-[10.5px] text-[color:var(--color-subtle)] hover:text-[color:var(--color-text)]" onclick="toast('Coverage: 48 shipping zones, 12 currencies')">coverage ↗</button>
+      </header>
+      <ul class="space-y-3 mt-1">
+        <li>
+          <div class="flex items-center justify-between text-[12.5px] mb-1.5"><span class="flex items-center gap-2"><span class="mono text-[10.5px] text-[color:var(--color-subtle)]">US</span><span>United States</span></span><span class="num font-semibold">1,847</span></div>
+          <div class="h-1.5 rounded-full bg-[color:var(--color-inset)] overflow-hidden"><div class="h-full rounded-full" style="width: 92%; background: var(--color-teal);"></div></div>
+        </li>
+        <li>
+          <div class="flex items-center justify-between text-[12.5px] mb-1.5"><span class="flex items-center gap-2"><span class="mono text-[10.5px] text-[color:var(--color-subtle)]">GB</span><span>United Kingdom</span></span><span class="num font-semibold">612</span></div>
+          <div class="h-1.5 rounded-full bg-[color:var(--color-inset)] overflow-hidden"><div class="h-full rounded-full" style="width: 46%; background: var(--color-amber);"></div></div>
+        </li>
+        <li>
+          <div class="flex items-center justify-between text-[12.5px] mb-1.5"><span class="flex items-center gap-2"><span class="mono text-[10.5px] text-[color:var(--color-subtle)]">DE</span><span>Germany</span></span><span class="num font-semibold">488</span></div>
+          <div class="h-1.5 rounded-full bg-[color:var(--color-inset)] overflow-hidden"><div class="h-full rounded-full" style="width: 38%; background: var(--color-violet);"></div></div>
+        </li>
+        <li>
+          <div class="flex items-center justify-between text-[12.5px] mb-1.5"><span class="flex items-center gap-2"><span class="mono text-[10.5px] text-[color:var(--color-subtle)]">JP</span><span>Japan</span></span><span class="num font-semibold">355</span></div>
+          <div class="h-1.5 rounded-full bg-[color:var(--color-inset)] overflow-hidden"><div class="h-full rounded-full" style="width: 28%; background: var(--color-green);"></div></div>
+        </li>
+        <li>
+          <div class="flex items-center justify-between text-[12.5px] mb-1.5"><span class="flex items-center gap-2"><span class="mono text-[10.5px] text-[color:var(--color-subtle)]">AU</span><span>Australia</span></span><span class="num font-semibold">208</span></div>
+          <div class="h-1.5 rounded-full bg-[color:var(--color-inset)] overflow-hidden"><div class="h-full rounded-full" style="width: 18%; background: var(--color-rose);"></div></div>
+        </li>
+        <li>
+          <div class="flex items-center justify-between text-[12.5px] mb-1.5"><span class="flex items-center gap-2"><span class="mono text-[10.5px] text-[color:var(--color-subtle)]">CA</span><span>Canada</span></span><span class="num font-semibold">174</span></div>
+          <div class="h-1.5 rounded-full bg-[color:var(--color-inset)] overflow-hidden"><div class="h-full rounded-full" style="width: 15%; background: var(--color-teal-deep);"></div></div>
+        </li>
+      </ul>
+
+      <div class="mt-5 pt-4 border-t hairline">
+        <div class="eyebrow mb-2">Attention queue</div>
+        <ul class="space-y-2 text-[12.5px]">
+          <li class="flex items-start gap-2.5">
+            <span class="mt-1 dot" style="background: var(--color-rose)"></span>
+            <div class="flex-1">
+              <div>Chargeback opened · <span class="mono">#MDR-88241</span></div>
+              <div class="text-[color:var(--color-subtle)] mono text-[10.5px]">Stripe · $284.00 · 4m ago</div>
+            </div>
+            <button class="chip rounded-md px-2 py-0.5 text-[11px]" onclick="toast('Opened dispute workspace')">Review</button>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="mt-1 dot" style="background: var(--color-amber)"></span>
+            <div class="flex-1">
+              <div>Inventory low · Helios Field Jacket — Olive M</div>
+              <div class="text-[color:var(--color-subtle)] mono text-[10.5px]">12 units · reorder point crossed · 18m ago</div>
+            </div>
+            <button class="chip rounded-md px-2 py-0.5 text-[11px]" onclick="toast('Draft PO #PR-1041 created')">Reorder</button>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="mt-1 dot" style="background: var(--color-teal)"></span>
+            <div class="flex-1">
+              <div>Campaign hit daily cap · "Spring field kit"</div>
+              <div class="text-[color:var(--color-subtle)] mono text-[10.5px]">Meta · $1,800 spent · ROAS 4.1×</div>
+            </div>
+            <button class="chip rounded-md px-2 py-0.5 text-[11px]" onclick="toast('Budget bumped by 25%')">Extend</button>
+          </li>
+        </ul>
+      </div>
+    </article>
+  </section>
+
+  <footer class="flex flex-wrap items-center justify-between gap-3 py-4 text-[11.5px] text-[color:var(--color-subtle)]">
+    <div class="flex items-center gap-3">
+      <span>© 2026 Meridian Commerce, Inc.</span>
+      <span class="mono">build 4.12.2 · d8a21f0</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="#" class="hover:text-[color:var(--color-text)]">Docs</a>
+      <a href="#" class="hover:text-[color:var(--color-text)]">Changelog</a>
+      <a href="#" class="hover:text-[color:var(--color-text)]">Status · all systems nominal</a>
+    </div>
+  </footer>
+</main>
+
+<!-- TOAST -->
+<div id="toast" class="fixed bottom-6 right-6 z-50 max-w-[320px] px-3.5 py-2.5 rounded-lg border bg-[color:var(--color-surface-2)] border-[color:var(--color-line-2)] shadow-lg text-[12.5px] text-[color:var(--color-text)] opacity-0 translate-y-3 transition-all duration-200" role="status" aria-live="polite">—</div>
+
+<script>
+  // --- Live clock (the ONE permitted setInterval per skill's ambient-signals rule) ---
+  function updateClock(){
+    const d = new Date();
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mm = String(d.getMinutes()).padStart(2,'0');
+    const ss = String(d.getSeconds()).padStart(2,'0');
+    const el = document.getElementById('clock');
+    if (el) el.textContent = `${hh}:${mm}:${ss} UTC−7`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // --- Toast helper ---
+  let toastTimer = null;
+  function toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.opacity = '1';
+    t.style.transform = 'translateY(0)';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      t.style.opacity = '0';
+      t.style.transform = 'translateY(12px)';
+    }, 2400);
+  }
+
+  // --- Range chip toggle ---
+  document.querySelectorAll('[data-range]').forEach(b => b.addEventListener('click', (e) => {
+    document.querySelectorAll('[data-range]').forEach(x => x.removeAttribute('data-active'));
+    e.currentTarget.setAttribute('data-active','true');
+    toast('Range · ' + e.currentTarget.dataset.range + ' applied');
+  }));
+
+  // --- Cohort heatmap ---
+  // Triangular matrix: older cohorts have more M-columns filled
+  const cohorts = [
+    { label: 'Nov 2025', size: 11840, row: [100, 52.4, 58.1, 61.8, 54.7, 49.2, 46.1, 44.3, 41.2] },
+    { label: 'Dec 2025', size: 14220, row: [100, 48.9, 54.2, 57.0, 51.4, 46.8, 43.5, 40.9, null] },
+    { label: 'Jan 2026', size: 16905, row: [100, 44.3, 49.8, 52.6, 47.1, 42.4, 39.0, null, null] },
+    { label: 'Feb 2026', size: 15014, row: [100, 37.2, 45.1, 48.0, 42.8, 38.3, null, null, null] },
+    { label: 'Mar 2026', size: 18302, row: [100, 39.6, 43.0, 41.5, null, null, null, null, null] },
+    { label: 'Apr 2026', size: 12091, row: [100, 31.2, null, null, null, null, null, null, null] },
+  ];
+  function cellColor(v){
+    if (v == null) return 'oklch(18% 0.014 255)';
+    if (v >= 100) return 'oklch(from var(--color-teal) l c h / 0.92)';
+    // map 0-62 → 0.06 - 0.85 alpha of teal
+    const norm = Math.min(v, 62) / 62;
+    return `oklch(from var(--color-teal) l c h / ${(0.08 + norm * 0.78).toFixed(3)})`;
+  }
+  function cellText(v){
+    if (v == null) return '';
+    if (v >= 100) return '100';
+    return v.toFixed(0);
+  }
+  const body = document.getElementById('cohortBody');
+  cohorts.forEach((c) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="pr-2 py-1 text-[color:var(--color-muted)] mono text-[10.5px] whitespace-nowrap">${c.label}</td>
+      <td class="pr-2 py-1 text-right text-[color:var(--color-muted)]">${c.size.toLocaleString()}</td>
+      ${c.row.map((v, i) => `
+        <td class="p-0.5 relative text-center">
+          <div class="hm-cell mx-auto rounded-[3px] flex items-center justify-center"
+               style="width: 30px; height: 26px; background: ${cellColor(v)}; color: ${v != null && v > 40 ? 'oklch(10% 0 0)' : 'oklch(92% 0.01 85 / 0.85)'}; font-weight: 600; font-size: 10.5px; ${v == null ? 'border: 1px dashed oklch(28% 0.015 255);' : ''}"
+               aria-label="${c.label} month ${i}: ${v == null ? 'no data' : v + '%'}">
+            ${cellText(v)}
+          </div>
+          ${v != null ? `<span class="tooltip">${c.label} · M${i} · ${v.toFixed(1)}% retained</span>` : ''}
+        </td>
+      `).join('')}
+    `;
+    body.appendChild(tr);
+  });
+
+  // --- Chart.js shared options ---
+  const CSS = getComputedStyle(document.documentElement);
+  const teal = 'oklch(72% 0.14 185)';
+  const amber = 'oklch(78% 0.15 68)';
+  const muted = 'oklch(68% 0.018 250)';
+  const line = 'oklch(27% 0.015 255)';
+  const surface2 = 'oklch(21% 0.015 255)';
+
+  Chart.defaults.font.family = "'DM Sans', system-ui, sans-serif";
+  Chart.defaults.color = muted;
+  Chart.defaults.borderColor = line;
+
+  // --- Revenue hourly over 30 days (720 points) ---
+  function genRevSeries(){
+    const pts = 30 * 24;
+    const gross = [], net = [], labels = [], tickLabels = [];
+    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const start = new Date('2026-03-24T00:00:00Z').getTime();
+    for (let i = 0; i < pts; i++){
+      const d = new Date(start + i * 3600 * 1000);
+      const hour = d.getUTCHours();
+      const dayOfWeek = d.getUTCDay();
+      const weekendDip = (dayOfWeek === 0 || dayOfWeek === 6) ? -320 : 0;
+      const diurnal = 2400 * Math.sin(((hour - 5) / 24) * Math.PI * 2) + 2400;
+      const drift = i * 2.6;
+      const noise = (Math.sin(i * 1.33) + Math.sin(i * 0.37)) * 180;
+      const g = Math.max(120, 1800 + diurnal + weekendDip + drift + noise);
+      gross.push(Math.round(g));
+      net.push(Math.round(g * (0.955 - Math.sin(i*0.11) * 0.01)));
+      const hh = String(hour).padStart(2,'0');
+      const dayLabel = MONTHS[d.getUTCMonth()] + ' ' + d.getUTCDate();
+      labels.push(dayLabel + ' ' + hh + ':00');
+      // Show a tick only at midnight every 3rd day
+      tickLabels.push(hour === 0 && d.getUTCDate() % 3 === 0 ? dayLabel : '');
+    }
+    return { labels, tickLabels, gross, net };
+  }
+  const rev = genRevSeries();
+
+  new Chart(document.getElementById('revChart'), {
+    type: 'line',
+    data: {
+      labels: rev.labels,
+      datasets: [
+        {
+          label: 'Gross',
+          data: rev.gross,
+          borderColor: teal,
+          backgroundColor: (ctx) => {
+            const c = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
+            c.addColorStop(0, 'oklch(72% 0.14 185 / 0.28)');
+            c.addColorStop(1, 'oklch(72% 0.14 185 / 0)');
+            return c;
+          },
+          borderWidth: 1.6,
+          fill: true,
+          tension: 0.32,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointHoverBackgroundColor: teal,
+          pointHoverBorderColor: 'oklch(14% 0.012 255)',
+          pointHoverBorderWidth: 2,
+        },
+        {
+          label: 'Net of refunds',
+          data: rev.net,
+          borderColor: amber,
+          borderWidth: 1.3,
+          borderDash: [3, 3],
+          fill: false,
+          tension: 0.32,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointHoverBackgroundColor: amber,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: 'index' },
+      scales: {
+        x: {
+          type: 'category',
+          grid: { display: false },
+          border: { color: line },
+          ticks: {
+            color: muted,
+            font: { size: 10 },
+            maxRotation: 0,
+            autoSkip: false,
+            callback: function(value, index){ return rev.tickLabels[index] || ''; },
+          },
+        },
+        y: {
+          grid: { color: 'oklch(27% 0.015 255 / 0.6)', drawTicks: false },
+          border: { display: false },
+          ticks: {
+            color: muted,
+            font: { size: 10 },
+            callback: (v) => '$' + (v >= 1000 ? (v/1000).toFixed(1) + 'k' : v),
+            padding: 6,
+          },
+        },
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: surface2,
+          borderColor: 'oklch(32% 0.018 255)',
+          borderWidth: 1,
+          titleColor: 'oklch(97% 0.008 85)',
+          bodyColor: 'oklch(97% 0.008 85)',
+          padding: 10,
+          titleFont: { family: "'JetBrains Mono', monospace", size: 11, weight: '500' },
+          bodyFont: { family: "'DM Sans', sans-serif", size: 12 },
+          callbacks: {
+            label: (c) => ` ${c.dataset.label}: $${c.parsed.y.toLocaleString()}`,
+          },
+        },
+      },
+    },
+  });
+
+  // --- Channel donut ---
+  new Chart(document.getElementById('channelChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Direct', 'Paid search', 'Organic search', 'Marketplaces', 'Social'],
+      datasets: [{
+        data: [38.2, 22.7, 17.4, 13.9, 7.8],
+        backgroundColor: [
+          'oklch(72% 0.14 185)',
+          'oklch(78% 0.15 68)',
+          'oklch(70% 0.16 295)',
+          'oklch(72% 0.16 150)',
+          'oklch(68% 0.18 18)',
+        ],
+        borderColor: 'oklch(18% 0.014 255)',
+        borderWidth: 2,
+        hoverOffset: 6,
+      }],
+    },
+    options: {
+      cutout: '72%',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: surface2,
+          borderColor: 'oklch(32% 0.018 255)',
+          borderWidth: 1,
+          titleColor: 'oklch(97% 0.008 85)',
+          bodyColor: 'oklch(97% 0.008 85)',
+          callbacks: { label: (c) => ` ${c.label}: ${c.parsed}%` },
+        },
+      },
+    },
+  });
+
+  // --- Live orders feed ---
+  const FEED_SEED = [
+    { t: -4,   id: 'MDR-88512', cust: 'Aasha Mehta',     city: 'Austin, TX',      amt: 148.20,  items: 2, kind: 'paid',   tag: 'Returning' },
+    { t: -12,  id: 'MDR-88511', cust: 'Jonas Svensson',  city: 'Gothenburg, SE',  amt: 312.90,  items: 3, kind: 'paid',   tag: 'New' },
+    { t: -18,  id: 'MDR-88510', cust: 'Nia Okonkwo',     city: 'Lagos, NG',       amt: 89.50,   items: 1, kind: 'paid',   tag: 'New' },
+    { t: -25,  id: 'MDR-88509', cust: 'Hideo Tanaka',    city: 'Osaka, JP',       amt: 428.00,  items: 4, kind: 'paid',   tag: 'VIP' },
+    { t: -41,  id: 'MDR-88508', cust: 'Renata Oliveira', city: 'Lisbon, PT',      amt: 62.40,   items: 1, kind: 'refund', tag: 'Refund partial' },
+    { t: -53,  id: 'MDR-88507', cust: 'Calvin Wright',   city: 'Manchester, UK',  amt: 185.00,  items: 2, kind: 'risk',   tag: 'AVS mismatch' },
+    { t: -67,  id: 'MDR-88506', cust: 'Sofia Beltran',   city: 'Monterrey, MX',   amt: 74.80,   items: 1, kind: 'paid',   tag: 'Returning' },
+    { t: -82,  id: 'MDR-88505', cust: 'Ingrid Hovland',  city: 'Oslo, NO',        amt: 249.00,  items: 2, kind: 'paid',   tag: 'New' },
+    { t: -98,  id: 'MDR-88504', cust: 'Dmitri Volkov',   city: 'Riga, LV',        amt: 312.00,  items: 3, kind: 'paid',   tag: 'Returning' },
+    { t: -124, id: 'MDR-88503', cust: 'Leila Haddad',    city: 'Casablanca, MA',  amt: 98.00,   items: 1, kind: 'paid',   tag: 'New' },
+  ];
+  const NAMES = ['Priya Ramanathan','Miguel Alcázar','Yuki Tanabe','Fatou Ndiaye','Cormac O\'Hara','Svenja Becker','Elena Popescu','Arjun Rao','Beatriz Vieira','Tomás Blaha','Keiko Watanabe','Amare Bekele','Astrid Lindqvist','Wei Chen','Rohan Iyer'];
+  const CITIES = ['Brooklyn, NY','Copenhagen, DK','Kyoto, JP','Nairobi, KE','Dublin, IE','Hamburg, DE','Bucharest, RO','Mumbai, IN','Porto, PT','Prague, CZ','Sapporo, JP','Addis Ababa, ET','Malmö, SE','Chengdu, CN','Bengaluru, IN'];
+  const KIND_COLOR = { paid: 'var(--color-lime)', refund: 'var(--color-amber)', risk: 'var(--color-rose)' };
+  const KIND_LABEL = { paid: 'Paid', refund: 'Refund', risk: 'Risk' };
+
+  let feedFilter = 'all';
+  function relTime(sec){
+    if (sec < 60) return sec + 's ago';
+    const m = Math.floor(sec / 60);
+    if (m < 60) return m + 'm ago';
+    return Math.floor(m/60) + 'h ' + (m%60) + 'm ago';
+  }
+  function rowHTML(o){
+    const kc = KIND_COLOR[o.kind];
+    const visible = (feedFilter === 'all' || feedFilter === o.kind);
+    return `
+      <li data-kind="${o.kind}" class="flex items-center gap-3 px-1 py-2.5 row-hover rounded-md ${visible ? '' : 'hidden'}" ${o._new ? 'style="animation: tickIn 360ms var(--ease-out) both;"' : ''}>
+        <span class="dot" style="background: ${kc}"></span>
+        <span class="mono text-[11px] text-[color:var(--color-muted)] w-14 num" data-rel="${o.tSec}">${relTime(o.tSec)}</span>
+        <span class="mono text-[11px] text-[color:var(--color-subtle)] w-24">${o.id}</span>
+        <span class="flex-1 text-[12.5px]"><span class="text-[color:var(--color-text)]">${o.cust}</span> <span class="text-[color:var(--color-subtle)]">· ${o.city}</span></span>
+        <span class="chip rounded-md px-1.5 py-0.5 text-[10.5px]" style="border-color: oklch(from ${kc} l c h / 0.4); color: ${kc}; background: oklch(from ${kc} l c h / 0.08);">${o.tag}</span>
+        <span class="text-[11px] text-[color:var(--color-muted)] num w-8 text-right">×${o.items}</span>
+        <span class="num font-semibold w-20 text-right text-[13px]">$${o.amt.toFixed(2)}</span>
+        <button class="chip rounded-md px-1.5 py-0.5 text-[10.5px] text-[color:var(--color-muted)] hover:text-[color:var(--color-text)]" onclick="copyId('${o.id}', this)" title="Copy order ID">copy</button>
+      </li>
+    `;
+  }
+  const feedEl = document.getElementById('feed');
+  const FEED = FEED_SEED.map(o => ({ ...o, tSec: -o.t }));
+  function render(){ feedEl.innerHTML = FEED.slice(0, 18).map(rowHTML).join(''); }
+  render();
+
+  function filterFeed(kind){
+    feedFilter = (feedFilter === kind) ? 'all' : kind;
+    document.querySelectorAll('[onclick^="filterFeed"]').forEach(b => b.removeAttribute('data-active'));
+    if (feedFilter !== 'all') {
+      const btn = Array.from(document.querySelectorAll('[onclick^="filterFeed"]')).find(b => b.getAttribute('onclick').includes(`'${kind}'`));
+      if (btn) btn.setAttribute('data-active', 'true');
+    } else {
+      document.querySelector('[onclick^="filterFeed"]')?.parentElement?.querySelector('[data-active="true"]');
+    }
+    render();
+  }
+  window.filterFeed = filterFeed;
+
+  function copyId(id, btn){
+    const orig = btn.textContent;
+    try { navigator.clipboard.writeText(id); } catch(e) {}
+    btn.textContent = '✓';
+    btn.style.color = 'var(--color-lime)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1200);
+  }
+  window.copyId = copyId;
+
+  // increment times + occasionally prepend a new row
+  setInterval(() => {
+    // bump relative times
+    FEED.forEach(o => o.tSec += 1);
+    document.querySelectorAll('#feed [data-rel]').forEach(el => {
+      const r = parseInt(el.dataset.rel) + 1;
+      el.dataset.rel = r;
+      el.textContent = relTime(r);
+    });
+    // inject every ~4s
+    if (Math.random() < 0.26) {
+      const kinds = ['paid','paid','paid','paid','paid','refund','risk'];
+      const kind = kinds[Math.floor(Math.random() * kinds.length)];
+      const idNum = 88513 + Math.floor((Date.now() % 10000) / 500);
+      const neu = {
+        id: 'MDR-' + idNum,
+        cust: NAMES[Math.floor(Math.random()*NAMES.length)],
+        city: CITIES[Math.floor(Math.random()*CITIES.length)],
+        amt: Math.round((40 + Math.random() * 420) * 100) / 100,
+        items: 1 + Math.floor(Math.random() * 4),
+        kind,
+        tag: kind === 'paid' ? (Math.random() < 0.4 ? 'New' : 'Returning') : (kind === 'refund' ? 'Refund partial' : 'AVS mismatch'),
+        tSec: 0,
+        _new: true,
+      };
+      FEED.unshift(neu);
+      FEED.splice(40);
+      render();
+    }
+    // update sync label
+    const sync = document.getElementById('syncAgo');
+    if (sync) {
+      const n = (parseInt(sync.dataset.n || '6') + 1) % 18;
+      sync.dataset.n = n;
+      sync.textContent = n + 's ago';
+    }
+  }, 1000);
+</script>
+</body>
+</html>

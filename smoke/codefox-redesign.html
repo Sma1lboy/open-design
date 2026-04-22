@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Codefox — a whole app, from one paragraph.</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper:   oklch(0.965 0.012 85);     /* warm cream */
+    --ink:     oklch(0.17 0.015 60);      /* warm near-black */
+    --ink-2:   oklch(0.32 0.015 55);
+    --ink-3:   oklch(0.52 0.015 55);
+    --ink-4:   oklch(0.72 0.012 55);
+    --rust:    oklch(0.64 0.198 42);      /* rust-orange, the hero accent */
+    --ember:   oklch(0.54 0.18 32);       /* deeper */
+    --mustard: oklch(0.78 0.14 82);       /* secondary */
+    --moss:    oklch(0.55 0.12 140);      /* contrast */
+    --plum:    oklch(0.36 0.09 340);      /* tertiary */
+    --line:    oklch(0.84 0.02 75);
+    --line-2:  oklch(0.9 0.015 70);
+    --grid:    'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+    --serif:   'Instrument Serif', ui-serif, Georgia, serif;
+    --mono:    'JetBrains Mono', ui-monospace, Menlo, monospace;
+  }
+  html, body { background: var(--paper); color: var(--ink); font-family: var(--grid); }
+  .grid-face { font-family: var(--grid); font-variation-settings: 'wdth' 100, 'opsz' 96; letter-spacing: -0.02em; }
+  .grid-cond { font-family: var(--grid); font-variation-settings: 'wdth' 75, 'opsz' 96; letter-spacing: -0.015em; }
+  .grid-ext { font-family: var(--grid); font-variation-settings: 'wdth' 125, 'opsz' 12; letter-spacing: 0.04em; }
+  .serif { font-family: var(--serif); letter-spacing: -0.01em; }
+  .italic { font-family: var(--serif); font-style: italic; }
+  .mono { font-family: var(--mono); }
+
+  /* marquee */
+  .ticker { display: flex; gap: 2.4rem; font-family: var(--mono); font-size: 0.76rem; white-space: nowrap; letter-spacing: 0.04em; animation: slide 42s linear infinite; }
+  @keyframes slide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  .lbl { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
+  .hair { border-color: var(--line); }
+  .hair-2 { border-color: var(--line-2); }
+  .sep { height: 1px; background: var(--line); }
+  .sep-2 { height: 1px; background: var(--line-2); }
+  .rust { color: var(--rust); }
+  .bg-rust { background: var(--rust); }
+  .bg-ink { background: var(--ink); }
+  .bg-paper { background: var(--paper); }
+
+  .btn-prim {
+    background: var(--ink); color: var(--paper); padding: 0.82rem 1.1rem;
+    border-radius: 4px; font-weight: 500; font-size: 14px;
+    display: inline-flex; align-items: center; gap: 0.55rem;
+    transition: transform 130ms cubic-bezier(.2,.8,.2,1), box-shadow 200ms, background 200ms, color 200ms;
+    border: 1.5px solid var(--ink);
+  }
+  .btn-prim:hover { background: var(--rust); border-color: var(--rust); color: var(--paper); transform: translateY(-1px); box-shadow: 4px 4px 0 var(--ink); }
+  .btn-prim:active { transform: translateY(1px); box-shadow: 2px 2px 0 var(--ink); }
+  .btn-ghost {
+    color: var(--ink); padding: 0.82rem 1.1rem; border-radius: 4px;
+    border: 1.5px solid var(--ink); display: inline-flex; align-items: center; gap: 0.55rem;
+    font-size: 14px; font-weight: 500;
+    transition: background 150ms, transform 130ms, box-shadow 180ms;
+  }
+  .btn-ghost:hover { background: var(--ink); color: var(--paper); transform: translateY(-1px); box-shadow: 4px 4px 0 var(--rust); }
+  .btn-ghost:active { transform: translateY(1px); box-shadow: 2px 2px 0 var(--rust); }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.18rem 0.55rem; border: 1px solid var(--ink); border-radius: 2px;
+    font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .card {
+    border: 1.5px solid var(--ink); border-radius: 6px; background: var(--paper);
+    box-shadow: 6px 6px 0 var(--ink);
+    transition: transform 180ms, box-shadow 180ms;
+    position: relative;
+  }
+  .card:hover { transform: translate(-2px, -2px); box-shadow: 10px 10px 0 var(--ink); }
+  .card.rustshadow { box-shadow: 6px 6px 0 var(--rust); }
+  .card.rustshadow:hover { box-shadow: 10px 10px 0 var(--rust); }
+
+  .corner { position: absolute; width: 10px; height: 10px; border: 1.5px solid var(--ink); background: var(--paper); }
+  .corner.tl { top: -5px; left: -5px; }
+  .corner.tr { top: -5px; right: -5px; }
+  .corner.bl { bottom: -5px; left: -5px; }
+  .corner.br { bottom: -5px; right: -5px; }
+
+  .stripe-ink { background: repeating-linear-gradient(45deg, var(--ink) 0 2px, transparent 2px 8px); }
+  .stripe-rust { background: repeating-linear-gradient(45deg, var(--rust) 0 2px, transparent 2px 8px); }
+
+  .num {
+    font-family: var(--grid); font-variation-settings: 'wdth' 75, 'opsz' 96, 'wght' 700;
+    letter-spacing: -0.055em; line-height: 0.82;
+  }
+
+  ::selection { background: var(--rust); color: var(--paper); }
+
+  .dot { width: 7px; height: 7px; border-radius: 1px; display: inline-block; }
+
+  /* ide preview */
+  .ide {
+    background: oklch(0.18 0.015 60); color: oklch(0.93 0.015 80);
+    border: 1.5px solid var(--ink); border-radius: 6px;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.75;
+    overflow: hidden;
+  }
+  .ide .tab { padding: 0.45rem 0.9rem; border-right: 1px solid oklch(0.28 0.02 60); }
+  .ide .tab.on { background: oklch(0.22 0.018 60); color: var(--paper); border-top: 2px solid var(--rust); padding-top: calc(0.45rem - 2px); }
+  .ide .ln { color: oklch(0.5 0.01 60); width: 2.1rem; flex-shrink: 0; text-align: right; padding-right: 0.85rem; user-select: none; }
+  .code-k { color: oklch(0.8 0.15 42); }
+  .code-s { color: oklch(0.82 0.12 140); }
+  .code-v { color: oklch(0.85 0.08 220); }
+  .code-c { color: oklch(0.55 0.015 60); font-style: italic; }
+  .code-t { color: oklch(0.82 0.14 82); }
+
+  details summary { list-style: none; cursor: pointer; }
+  details summary::-webkit-details-marker { display: none; }
+  details[open] .caret { transform: rotate(45deg); }
+  .caret { transition: transform 180ms; display: inline-block; }
+
+  .link-u { border-bottom: 1.5px solid var(--ink); padding-bottom: 1px; transition: border-color 160ms, color 160ms; }
+  .link-u:hover { color: var(--rust); border-color: var(--rust); }
+
+  /* pulse */
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 999px; background: var(--moss);
+    box-shadow: 0 0 0 3px oklch(0.55 0.12 140 / 0.2);
+    animation: p 2s ease-in-out infinite;
+  }
+  @keyframes p { 0%, 100% { box-shadow: 0 0 0 3px oklch(0.55 0.12 140 / 0.25); } 50% { box-shadow: 0 0 0 8px oklch(0.55 0.12 140 / 0.05); } }
+
+  .grid-overlay {
+    background-image:
+      linear-gradient(var(--line-2) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-2) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .hero-title {
+    font-family: var(--grid); font-variation-settings: 'wdth' 75, 'opsz' 96, 'wght' 700;
+    letter-spacing: -0.045em; line-height: 0.84;
+  }
+
+  .badge-num {
+    font-family: var(--mono); font-size: 0.7rem; color: var(--ink-3);
+    letter-spacing: 0.1em;
+  }
+
+  input[type=text] {
+    background: transparent; outline: none; width: 100%;
+    font-family: var(--grid); color: var(--ink);
+  }
+  input[type=text]::placeholder { color: var(--ink-4); }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ticker top -->
+<div class="bg-ink text-[color:var(--paper)] overflow-hidden border-b-[1.5px] border-[color:var(--ink)]">
+  <div class="ticker py-2.5">
+    <span>★ 73 · GitHub stars</span><span class="rust">◆</span>
+    <span>next-gen project generator · multi-agent · live preview</span><span class="rust">◆</span>
+    <span>→ node.js / postgres / pnpm</span><span class="rust">◆</span>
+    <span>currently shipping: one-click deploy, v2 preview</span><span class="rust">◆</span>
+    <span>73 people made something with this today</span><span class="rust">◆</span>
+    <!-- dup for loop -->
+    <span>★ 73 · GitHub stars</span><span class="rust">◆</span>
+    <span>next-gen project generator · multi-agent · live preview</span><span class="rust">◆</span>
+    <span>→ node.js / postgres / pnpm</span><span class="rust">◆</span>
+    <span>currently shipping: one-click deploy, v2 preview</span><span class="rust">◆</span>
+    <span>73 people made something with this today</span><span class="rust">◆</span>
+  </div>
+</div>
+
+<!-- Nav -->
+<header>
+  <div class="max-w-[1280px] mx-auto px-6 lg:px-10 h-[68px] flex items-center justify-between border-b-[1.5px] hair">
+    <div class="flex items-center gap-3">
+      <a href="#" class="flex items-center gap-2.5">
+        <svg width="28" height="28" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" rx="4" fill="var(--ink)"/><path d="M9 11 L23 11 M9 16 L19 16 M9 21 L15 21" stroke="var(--rust)" stroke-width="2.4" stroke-linecap="square"/></svg>
+        <span class="grid-face text-[22px] font-bold tracking-tight">codefox</span>
+      </a>
+      <span class="tag ml-1">v3 · preview</span>
+    </div>
+    <nav class="hidden md:flex items-center gap-7 text-[14px]">
+      <a href="#how" class="link-u">How it works</a>
+      <a href="#agents" class="link-u">Agents</a>
+      <a href="#build" class="link-u">See one built</a>
+      <a href="#pricing" class="link-u">Pricing</a>
+      <a href="#" class="link-u mono text-[12.5px]" style="color: var(--ink-3)">docs ↗</a>
+    </nav>
+    <div class="flex items-center gap-2.5">
+      <a href="#" class="hidden sm:inline-flex items-center gap-2 text-[13px] link-u mono">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 .2a8 8 0 0 0-2.5 15.6c.4.1.5-.2.5-.4v-1.5c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.8-.5.1-.5.1-.5.8.1 1.3.9 1.3.9.7 1.3 2 .9 2.5.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.5 7.5 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.5 1.1.2 1.9.1 2.1.5.5.8 1.2.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.2.6.7.6 1.4v2.2c0 .2.1.5.5.4A8 8 0 0 0 8 .2z"/></svg>
+        ★ 73
+      </a>
+      <a href="#" class="btn-prim">
+        Open the studio
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7h10M8 3l4 4-4 4"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="relative overflow-hidden border-b-[1.5px] hair">
+  <div class="absolute inset-0 grid-overlay opacity-60 pointer-events-none"></div>
+  <div class="max-w-[1280px] mx-auto px-6 lg:px-10 pt-20 pb-14 relative">
+    <div class="grid grid-cols-12 gap-8">
+      <div class="col-span-12 lg:col-span-8">
+        <div class="flex items-center gap-3 mb-8">
+          <span class="tag bg-ink text-[color:var(--paper)] border-[color:var(--ink)]">Issue N° 003</span>
+          <span class="tag">next-gen project generator</span>
+          <span class="badge-num hidden md:inline">EST. 2025 · NEW YORK · OPEN SOURCE</span>
+        </div>
+
+        <h1 class="hero-title text-[clamp(3.4rem,10vw,9rem)]">
+          A whole app.<br/>
+          <span style="color: var(--rust)">From one</span> <span class="italic" style="font-family: var(--serif); font-variation-settings: normal; letter-spacing: -0.02em">paragraph.</span>
+        </h1>
+
+        <p class="mt-10 text-[18px] leading-[1.55] max-w-[56ch]" style="color: var(--ink-2)">
+          <span class="italic">Codefox</span> is an open-source studio where a swarm of specialist agents — a planner, a shipper, a stylist, a reviewer — turn <span class="italic">what you want</span> into a running Next.js + Postgres app, with live preview, one-click deploy, and source you actually own.
+        </p>
+
+        <!-- mock prompt box -->
+        <div class="mt-10 card rustshadow" style="padding: 0.85rem 0.9rem 0.85rem 1.1rem;">
+          <div class="flex items-center gap-3">
+            <span class="dot bg-rust"></span>
+            <span class="lbl">prompt</span>
+            <input type="text" class="text-[15.5px]" value="a dog walker booking app with stripe and a map of parks near me" />
+            <button class="btn-prim" style="padding: 0.55rem 0.9rem; font-size: 13px;">
+              Build it →
+            </button>
+          </div>
+          <div class="sep-2 mt-3"></div>
+          <div class="mt-3 flex items-center gap-4 text-[12px] flex-wrap" style="color: var(--ink-3)">
+            <span class="mono">try:</span>
+            <button class="link-u text-[12px]">“a TikTok for chess problems”</button>
+            <button class="link-u text-[12px]">“invoice tracker for a freelance designer”</button>
+            <button class="link-u text-[12px]">“city-wide bookshop inventory”</button>
+          </div>
+        </div>
+
+        <div class="mt-7 flex flex-wrap items-center gap-3">
+          <a href="#" class="btn-prim">Start a project — free</a>
+          <a href="#" class="btn-ghost">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3 2l9 5-9 5V2z"/></svg>
+            Watch one get built (90s)
+          </a>
+          <span class="mono text-[12px] ml-2" style="color: var(--ink-3)">no credit card, no waitlist</span>
+        </div>
+      </div>
+
+      <!-- right rail stats -->
+      <div class="col-span-12 lg:col-span-4">
+        <div class="card" style="padding: 1.5rem;">
+          <div class="flex items-center justify-between">
+            <span class="lbl">tonight's count</span>
+            <span class="flex items-center gap-2 text-[12px] mono"><span class="live-dot"></span>live</span>
+          </div>
+          <div class="mt-5 flex items-end gap-1">
+            <div class="num text-[6.5rem]" style="color: var(--rust)">428</div>
+            <div class="pb-3">
+              <div class="grid-cond text-[1.05rem] leading-tight">apps<br/>built today</div>
+            </div>
+          </div>
+          <div class="sep-2 my-5"></div>
+          <dl class="grid grid-cols-2 gap-y-3 text-[13px]">
+            <dt style="color: var(--ink-3)">avg time</dt><dd class="mono text-right">3m 14s</dd>
+            <dt style="color: var(--ink-3)">median lines</dt><dd class="mono text-right">1,842</dd>
+            <dt style="color: var(--ink-3)">test coverage</dt><dd class="mono text-right">72%</dd>
+            <dt style="color: var(--ink-3)">deployed</dt><dd class="mono text-right" style="color: var(--moss)">391 · 91%</dd>
+          </dl>
+          <div class="mt-5 sep-2"></div>
+          <div class="mt-5 text-[12.5px] italic" style="color: var(--ink-3)">
+            "It built a working Stripe checkout before I finished my coffee." — a user, yesterday
+          </div>
+        </div>
+        <div class="mt-4 grid grid-cols-3 gap-3">
+          <div class="card text-center" style="padding: 0.9rem 0.4rem;">
+            <div class="num text-[1.9rem]">73</div>
+            <div class="badge-num mt-1">★ STARS</div>
+          </div>
+          <div class="card text-center" style="padding: 0.9rem 0.4rem;">
+            <div class="num text-[1.9rem]">19</div>
+            <div class="badge-num mt-1">CONTRIBS</div>
+          </div>
+          <div class="card text-center" style="padding: 0.9rem 0.4rem;">
+            <div class="num text-[1.9rem]" style="color: var(--rust)">MIT</div>
+            <div class="badge-num mt-1">LICENSE</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- stripe: from prompt to app -->
+<section id="how" class="border-b-[1.5px] hair">
+  <div class="max-w-[1280px] mx-auto px-6 lg:px-10 py-20">
+    <div class="flex items-end justify-between mb-14 flex-wrap gap-6">
+      <div>
+        <span class="lbl">§ chapter one</span>
+        <h2 class="grid-cond text-[clamp(2.6rem,5.2vw,4.4rem)] leading-[0.94] mt-3">
+          From what you want,<br/>
+          <span style="color: var(--rust)">to what runs.</span>
+        </h2>
+      </div>
+      <div class="flex items-center gap-4 text-[12.5px] mono" style="color: var(--ink-3)">
+        <span>01</span><span>→</span><span>02</span><span>→</span><span>03</span><span>→</span><span>04</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-0 border-[1.5px] hair rounded-lg overflow-hidden">
+      <div class="p-6 border-r-[1.5px] hair md:last:border-r-0 relative bg-paper">
+        <div class="absolute top-0 left-0 right-0 h-1.5 stripe-ink"></div>
+        <div class="flex items-baseline gap-2 mb-3">
+          <div class="num text-[3rem]">01</div>
+          <span class="lbl">describe</span>
+        </div>
+        <div class="grid-face text-[1.3rem] mb-2">A paragraph.</div>
+        <p class="text-[13.5px]" style="color: var(--ink-2)">Say what you want in plain English. No schema language. No setup wizard. "A booking tool for my yoga studio" is enough.</p>
+      </div>
+      <div class="p-6 border-r-[1.5px] hair bg-paper">
+        <div class="flex items-baseline gap-2 mb-3">
+          <div class="num text-[3rem]">02</div>
+          <span class="lbl">the swarm plans</span>
+        </div>
+        <div class="grid-face text-[1.3rem] mb-2">Four agents confer.</div>
+        <p class="text-[13.5px]" style="color: var(--ink-2)">The Planner drafts pages. The Schema Agent proposes tables. The Stylist picks tokens. The Reviewer argues. You watch.</p>
+      </div>
+      <div class="p-6 border-r-[1.5px] hair bg-paper">
+        <div class="flex items-baseline gap-2 mb-3">
+          <div class="num text-[3rem]">03</div>
+          <span class="lbl">live preview</span>
+        </div>
+        <div class="grid-face text-[1.3rem] mb-2">You see it being built.</div>
+        <p class="text-[13.5px]" style="color: var(--ink-2)">Every file streams to a split-pane preview. Click a button in the preview, jump to the code that rendered it. No black box.</p>
+      </div>
+      <div class="p-6 bg-paper">
+        <div class="absolute top-0 left-0 right-0 h-1.5 stripe-rust hidden"></div>
+        <div class="flex items-baseline gap-2 mb-3">
+          <div class="num text-[3rem]" style="color: var(--rust)">04</div>
+          <span class="lbl">own it</span>
+        </div>
+        <div class="grid-face text-[1.3rem] mb-2">Deploy or git clone.</div>
+        <p class="text-[13.5px]" style="color: var(--ink-2)">One button to Vercel or Fly. Or download the repo and host it yourself. Source is yours, MIT-clean.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Build example + IDE -->
+<section id="build" class="border-b-[1.5px] hair" style="background: oklch(0.985 0.008 85)">
+  <div class="max-w-[1280px] mx-auto px-6 lg:px-10 py-24">
+    <div class="grid grid-cols-12 gap-10">
+      <div class="col-span-12 lg:col-span-4">
+        <span class="lbl">§ chapter two</span>
+        <h2 class="grid-cond text-[clamp(2.4rem,4.8vw,3.8rem)] leading-[0.95] mt-3">
+          A real build,<br/>
+          <span class="italic" style="font-family: var(--serif); letter-spacing: -0.01em;">from prompt</span><br/>
+          <span style="color: var(--rust)">to preview.</span>
+        </h2>
+        <p class="mt-6 text-[15px]" style="color: var(--ink-2)">Here's what shows up on screen when you ask for <span class="italic">"a dog walker booking app."</span> Left: the agents negotiating. Right: the preview you can click through. The middle: actual code, actually running.</p>
+
+        <div class="mt-8 space-y-3">
+          <div class="flex gap-3 items-start">
+            <span class="dot mt-2" style="background: var(--rust)"></span>
+            <div>
+              <div class="grid-face text-[14.5px] font-semibold">Full-stack, not a landing page</div>
+              <div class="text-[13px]" style="color: var(--ink-3)">Auth, DB, API, UI — every layer, in one repo.</div>
+            </div>
+          </div>
+          <div class="flex gap-3 items-start">
+            <span class="dot mt-2" style="background: var(--mustard)"></span>
+            <div>
+              <div class="grid-face text-[14.5px] font-semibold">Every choice is editable</div>
+              <div class="text-[13px]" style="color: var(--ink-3)">Don't like the color? Change it. Don't like the schema? Rename it. The agents re-plan around you.</div>
+            </div>
+          </div>
+          <div class="flex gap-3 items-start">
+            <span class="dot mt-2" style="background: var(--moss)"></span>
+            <div>
+              <div class="grid-face text-[14.5px] font-semibold">Source, not a hosted toy</div>
+              <div class="text-[13px]" style="color: var(--ink-3)">git clone whenever. You're not locked into codefox-the-service.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-span-12 lg:col-span-8">
+        <div class="ide">
+          <!-- tabs -->
+          <div class="flex items-center" style="background: oklch(0.15 0.015 60); border-bottom: 1px solid oklch(0.24 0.02 60);">
+            <div class="tab on flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-rust"></span>prompt.md</div>
+            <div class="tab flex items-center gap-2" style="color: oklch(0.7 0.015 60)">app/page.tsx</div>
+            <div class="tab flex items-center gap-2" style="color: oklch(0.7 0.015 60)">db/schema.ts</div>
+            <div class="tab flex items-center gap-2" style="color: oklch(0.7 0.015 60)">api/bookings.ts</div>
+            <div class="tab flex items-center gap-2 ml-auto pr-4" style="color: oklch(0.5 0.015 60); font-size: 11px;">preview: localhost:3000</div>
+          </div>
+
+          <div class="grid grid-cols-12">
+            <!-- left: agent chatter -->
+            <div class="col-span-12 md:col-span-7 p-5" style="border-right: 1px solid oklch(0.24 0.02 60);">
+              <div class="flex"><span class="ln">1</span><span><span class="code-c"># prompt</span></span></div>
+              <div class="flex"><span class="ln">2</span><span style="color: oklch(0.9 0.02 80)">a dog walker booking app with stripe and a map of parks near me</span></div>
+              <div class="flex"><span class="ln">3</span><span></span></div>
+              <div class="flex"><span class="ln">4</span><span><span class="code-c">## planner · 00:02</span></span></div>
+              <div class="flex"><span class="ln">5</span><span><span style="color: oklch(0.85 0.08 220)">→</span> 7 routes: /, /walkers, /book, /book/:id, /dashboard, /api/...</span></div>
+              <div class="flex"><span class="ln">6</span><span><span style="color: oklch(0.85 0.08 220)">→</span> 4 tables: <span class="code-k">walker</span> <span class="code-k">dog</span> <span class="code-k">booking</span> <span class="code-k">payment</span></span></div>
+              <div class="flex"><span class="ln">7</span><span></span></div>
+              <div class="flex"><span class="ln">8</span><span><span class="code-c">## schema · 00:06</span></span></div>
+              <div class="flex"><span class="ln">9</span><span><span class="code-v">booking</span>.<span class="code-t">status</span> = enum(<span class="code-s">'pending'</span>, <span class="code-s">'paid'</span>, <span class="code-s">'done'</span>)</span></div>
+              <div class="flex"><span class="ln">10</span><span><span style="color: oklch(0.75 0.15 42)">↳ reviewer:</span> add <span class="code-s">'refunded'</span> — stripe supports it</span></div>
+              <div class="flex"><span class="ln">11</span><span><span style="color: oklch(0.85 0.08 220)">→</span> accepted. enum = 4 values.</span></div>
+              <div class="flex"><span class="ln">12</span><span></span></div>
+              <div class="flex"><span class="ln">13</span><span><span class="code-c">## stylist · 00:11</span></span></div>
+              <div class="flex"><span class="ln">14</span><span><span class="code-k">theme</span> = { accent: <span class="code-s">'oklch(0.68 0.15 42)'</span>, <span class="code-c">// rust</span></span></div>
+              <div class="flex"><span class="ln">15</span><span>           font: <span class="code-s">'Bricolage Grotesque'</span> }</span></div>
+              <div class="flex"><span class="ln">16</span><span></span></div>
+              <div class="flex"><span class="ln">17</span><span><span class="code-c">## shipper · 01:47</span></span></div>
+              <div class="flex"><span class="ln">18</span><span><span style="color: oklch(0.75 0.15 140)">✓</span> 42 files written. <span style="color: oklch(0.75 0.15 140)">✓</span> tests green.</span></div>
+              <div class="flex"><span class="ln">19</span><span><span style="color: oklch(0.75 0.15 140)">✓</span> preview ready on port 3000.</span></div>
+              <div class="flex"><span class="ln">20</span><span class="code-c"># done in 3m 11s. $0.62.</span></div>
+            </div>
+
+            <!-- right: mock preview -->
+            <div class="col-span-12 md:col-span-5 p-0" style="background: var(--paper); color: var(--ink); font-family: var(--grid);">
+              <div class="p-5">
+                <div class="flex items-center justify-between mb-5">
+                  <div class="flex items-center gap-2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--rust)" stroke-width="2"><path d="M10 5l4-2 4 2v4l-4 2-4-2z"/><circle cx="6" cy="15" r="3"/><circle cx="16" cy="19" r="2"/></svg>
+                    <span class="grid-face text-[17px] font-bold">pawpath</span>
+                  </div>
+                  <span class="tag" style="font-size: 0.62rem; padding: 0.12rem 0.4rem;">beta</span>
+                </div>
+                <div class="grid-face text-[1.7rem] leading-tight tracking-tight">Walkers near<br/><span style="color: var(--rust)">Bedford-Stuyvesant</span></div>
+                <div class="text-[12px] mt-2" style="color: var(--ink-3)">12 available · Tue · 3pm</div>
+                <div class="mt-4 space-y-2.5">
+                  <div class="flex items-center justify-between border-[1.5px] hair p-2.5 rounded">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-8 h-8 rounded-full" style="background: linear-gradient(135deg, var(--rust), var(--mustard))"></div>
+                      <div>
+                        <div class="text-[13px] font-semibold">Mara K.</div>
+                        <div class="text-[10.5px] mono" style="color: var(--ink-3)">★ 4.9 · 247 walks</div>
+                      </div>
+                    </div>
+                    <div class="text-[13px] mono font-semibold">$24/hr</div>
+                  </div>
+                  <div class="flex items-center justify-between border-[1.5px] hair p-2.5 rounded">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-8 h-8 rounded-full" style="background: linear-gradient(135deg, var(--moss), var(--mustard))"></div>
+                      <div>
+                        <div class="text-[13px] font-semibold">Dale N.</div>
+                        <div class="text-[10.5px] mono" style="color: var(--ink-3)">★ 4.8 · 82 walks</div>
+                      </div>
+                    </div>
+                    <div class="text-[13px] mono font-semibold">$19/hr</div>
+                  </div>
+                  <div class="flex items-center justify-between border-[1.5px] hair p-2.5 rounded" style="background: oklch(0.94 0.06 42 / 0.3); border-color: var(--rust);">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-8 h-8 rounded-full" style="background: linear-gradient(135deg, var(--plum), var(--rust))"></div>
+                      <div>
+                        <div class="text-[13px] font-semibold">Jun P.</div>
+                        <div class="text-[10.5px] mono" style="color: var(--ink-3)">★ 5.0 · just joined</div>
+                      </div>
+                    </div>
+                    <div class="text-[13px] mono font-semibold" style="color: var(--rust)">$16/hr</div>
+                  </div>
+                </div>
+                <button class="btn-prim w-full justify-center mt-4" style="padding: 0.6rem;">Book a walk →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- status bar -->
+          <div class="flex items-center justify-between px-4 py-2 text-[11px] mono" style="background: oklch(0.13 0.015 60); color: oklch(0.6 0.015 60);">
+            <div class="flex items-center gap-4">
+              <span style="color: var(--rust)">● SWARM · 4 agents</span>
+              <span>42 files</span>
+              <span>1,842 lines</span>
+              <span>tests: 38/38</span>
+            </div>
+            <div class="flex items-center gap-4">
+              <span>3m 11s · $0.62</span>
+              <span style="color: oklch(0.75 0.15 140)">● preview live</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Agents -->
+<section id="agents" class="border-b-[1.5px] hair">
+  <div class="max-w-[1280px] mx-auto px-6 lg:px-10 py-24">
+    <div class="flex items-end justify-between mb-14 flex-wrap gap-6">
+      <div>
+        <span class="lbl">§ chapter three · the cast</span>
+        <h2 class="grid-cond text-[clamp(2.6rem,5.2vw,4.4rem)] leading-[0.94] mt-3">
+          Four agents.<br/>
+          <span class="italic" style="font-family: var(--serif); letter-spacing: -0.01em;">One opinion each.</span>
+        </h2>
+      </div>
+      <p class="max-w-[40ch] text-[15px]" style="color: var(--ink-2)">Instead of one model doing everything badly, we run four specialists who argue until the plan is real. You can read the transcript.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div class="card" style="padding: 1.5rem; position: relative;">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div class="flex items-center justify-between mb-5">
+          <span class="num text-[3.4rem]" style="color: var(--rust)">01</span>
+          <span class="dot" style="background: var(--rust); width: 12px; height: 12px;"></span>
+        </div>
+        <div class="grid-face text-[1.4rem] font-semibold">The Planner</div>
+        <div class="italic mt-1 text-[14px]" style="color: var(--ink-3)">"what should this app be?"</div>
+        <div class="sep-2 my-4"></div>
+        <p class="text-[13.5px]" style="color: var(--ink-2)">Reads your paragraph, drafts the sitemap, names the pages, decides what's MVP. Opinionated about scope.</p>
+        <div class="mt-5 lbl">tools</div>
+        <div class="mt-2 flex flex-wrap gap-1.5">
+          <span class="tag" style="font-size: 0.6rem;">sitemap</span>
+          <span class="tag" style="font-size: 0.6rem;">user stories</span>
+          <span class="tag" style="font-size: 0.6rem;">scope cuts</span>
+        </div>
+      </div>
+
+      <div class="card" style="padding: 1.5rem; position: relative;">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div class="flex items-center justify-between mb-5">
+          <span class="num text-[3.4rem]" style="color: var(--moss)">02</span>
+          <span class="dot" style="background: var(--moss); width: 12px; height: 12px;"></span>
+        </div>
+        <div class="grid-face text-[1.4rem] font-semibold">The Schema Agent</div>
+        <div class="italic mt-1 text-[14px]" style="color: var(--ink-3)">"what does the data look like?"</div>
+        <div class="sep-2 my-4"></div>
+        <p class="text-[13.5px]" style="color: var(--ink-2)">Proposes tables, columns, relations, enums. Writes real Drizzle. Plans migrations. Rarely wrong about primary keys.</p>
+        <div class="mt-5 lbl">tools</div>
+        <div class="mt-2 flex flex-wrap gap-1.5">
+          <span class="tag" style="font-size: 0.6rem;">postgres</span>
+          <span class="tag" style="font-size: 0.6rem;">drizzle</span>
+          <span class="tag" style="font-size: 0.6rem;">prisma</span>
+        </div>
+      </div>
+
+      <div class="card" style="padding: 1.5rem; position: relative;">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div class="flex items-center justify-between mb-5">
+          <span class="num text-[3.4rem]" style="color: var(--mustard)">03</span>
+          <span class="dot" style="background: var(--mustard); width: 12px; height: 12px;"></span>
+        </div>
+        <div class="grid-face text-[1.4rem] font-semibold">The Stylist</div>
+        <div class="italic mt-1 text-[14px]" style="color: var(--ink-3)">"what should it feel like?"</div>
+        <div class="sep-2 my-4"></div>
+        <p class="text-[13.5px]" style="color: var(--ink-2)">Picks a palette in oklch, two fonts, a type ladder. Avoids purple gradients. Never uses Inter. Thank god.</p>
+        <div class="mt-5 lbl">tools</div>
+        <div class="mt-2 flex flex-wrap gap-1.5">
+          <span class="tag" style="font-size: 0.6rem;">tokens</span>
+          <span class="tag" style="font-size: 0.6rem;">tailwind v4</span>
+          <span class="tag" style="font-size: 0.6rem;">anti-slop</span>
+        </div>
+      </div>
+
+      <div class="card" style="padding: 1.5rem; position: relative;">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div class="flex items-center justify-between mb-5">
+          <span class="num text-[3.4rem]" style="color: var(--plum)">04</span>
+          <span class="dot" style="background: var(--plum); width: 12px; height: 12px;"></span>
+        </div>
+        <div class="grid-face text-[1.4rem] font-semibold">The Reviewer</div>
+        <div class="italic mt-1 text-[14px]" style="color: var(--ink-3)">"are we sure?"</div>
+        <div class="sep-2 my-4"></div>
+        <p class="text-[13.5px]" style="color: var(--ink-2)">Argues with the other three. Rejects plans that skip auth. Catches N+1 queries. Makes you a better engineer by proxy.</p>
+        <div class="mt-5 lbl">tools</div>
+        <div class="mt-2 flex flex-wrap gap-1.5">
+          <span class="tag" style="font-size: 0.6rem;">lint</span>
+          <span class="tag" style="font-size: 0.6rem;">typecheck</span>
+          <span class="tag" style="font-size: 0.6rem;">sanity</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- mini comparison -->
+    <div class="mt-14 card" style="padding: 0;">
+      <div class="flex items-center justify-between px-6 py-3 border-b-[1.5px] hair">
+        <span class="lbl">vs. the usual thing</span>
+        <span class="mono text-[11px]" style="color: var(--ink-3)">fig. 01</span>
+      </div>
+      <div class="grid grid-cols-3 text-[13.5px]">
+        <div class="p-5 border-r-[1.5px] hair">
+          <div class="lbl mb-3">a single prompt to gpt</div>
+          <ul class="space-y-1.5" style="color: var(--ink-3)">
+            <li>— one pass, hallucinates half</li>
+            <li>— plans auth? never</li>
+            <li>— reasonable by accident</li>
+            <li>— "I'll fix it later" × ∞</li>
+          </ul>
+        </div>
+        <div class="p-5 border-r-[1.5px] hair">
+          <div class="lbl mb-3">yet another ai site builder</div>
+          <ul class="space-y-1.5" style="color: var(--ink-3)">
+            <li>— great for a landing page</li>
+            <li>— purple gradient, always</li>
+            <li>— locked inside their app</li>
+            <li>— no source code, ever</li>
+          </ul>
+        </div>
+        <div class="p-5" style="background: oklch(0.94 0.06 42 / 0.18)">
+          <div class="lbl mb-3" style="color: var(--rust)">codefox</div>
+          <ul class="space-y-1.5">
+            <li>— four opinionated agents</li>
+            <li>— full-stack, not just a page</li>
+            <li>— you own the repo on day one</li>
+            <li>— MIT. no lock-in. no surprise.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section id="pricing" class="border-b-[1.5px] hair" style="background: oklch(0.985 0.008 85)">
+  <div class="max-w-[1280px] mx-auto px-6 lg:px-10 py-24">
+    <div class="flex items-end justify-between mb-12 flex-wrap gap-6">
+      <div>
+        <span class="lbl">§ chapter four · the bill</span>
+        <h2 class="grid-cond text-[clamp(2.4rem,4.8vw,3.8rem)] leading-[0.95] mt-3">
+          Two numbers.<br/>
+          <span style="color: var(--rust)">That's the whole menu.</span>
+        </h2>
+      </div>
+      <p class="max-w-[40ch] text-[15px]" style="color: var(--ink-2)">Free to clone. Pay only if you want the hosted studio with preview, deploy, and history. No seat tax. No "contact us" tier.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="card" style="padding: 2rem;">
+        <div class="flex items-center justify-between mb-4">
+          <span class="lbl">tier 01</span>
+          <span class="tag">open source</span>
+        </div>
+        <div class="grid-face text-[1.5rem] font-semibold mb-2">Self-host</div>
+        <div class="flex items-baseline gap-2">
+          <div class="num text-[5rem]">$0</div>
+          <span class="italic text-[15px]" style="color: var(--ink-3)">/ always</span>
+        </div>
+        <p class="mt-5 text-[14px]" style="color: var(--ink-2)">Clone, <span class="mono text-[13px]">pnpm install</span>, point at Postgres, ship. Uses your own OpenAI / Anthropic keys.</p>
+        <div class="sep-2 my-5"></div>
+        <ul class="space-y-2.5 text-[14px]">
+          <li class="flex gap-2.5"><span style="color: var(--rust)">◼</span>All four agents, full source</li>
+          <li class="flex gap-2.5"><span style="color: var(--rust)">◼</span>Live preview + git history</li>
+          <li class="flex gap-2.5"><span style="color: var(--rust)">◼</span>Deploy to Vercel, Fly, or metal</li>
+          <li class="flex gap-2.5"><span style="color: var(--rust)">◼</span>MIT license — no strings</li>
+        </ul>
+        <a href="#" class="btn-ghost mt-7 w-full justify-center">git clone codefox-repo/codefox</a>
+      </div>
+
+      <div class="card rustshadow" style="padding: 2rem; border-width: 2px;">
+        <div class="flex items-center justify-between mb-4">
+          <span class="lbl rust">tier 02</span>
+          <span class="tag" style="background: var(--rust); color: var(--paper); border-color: var(--rust);">hosted</span>
+        </div>
+        <div class="grid-face text-[1.5rem] font-semibold mb-2">Studio (cloud)</div>
+        <div class="flex items-baseline gap-2">
+          <div class="num text-[5rem]" style="color: var(--rust)">$29</div>
+          <span class="italic text-[15px]" style="color: var(--ink-3)">/ month</span>
+        </div>
+        <p class="mt-5 text-[14px]" style="color: var(--ink-2)">Same codefox, but we host the swarm, the preview, and your history. Bring the idea, leave with the repo.</p>
+        <div class="sep-2 my-5"></div>
+        <ul class="space-y-2.5 text-[14px]">
+          <li class="flex gap-2.5"><span style="color: var(--rust)">◼</span>Everything in self-host</li>
+          <li class="flex gap-2.5"><span style="color: var(--rust)">◼</span>Unlimited projects · shared workspaces</li>
+          <li class="flex gap-2.5"><span style="color: var(--rust)">◼</span>One-click deploy · we pay the agents</li>
+          <li class="flex gap-2.5"><span style="color: var(--rust)">◼</span>Version history · rollbacks</li>
+          <li class="flex gap-2.5"><span style="color: var(--rust)">◼</span>Export-to-repo on demand</li>
+        </ul>
+        <a href="#" class="btn-prim mt-7 w-full justify-center">Start 14-day trial — no card →</a>
+        <div class="mono text-[11.5px] mt-3 text-center" style="color: var(--ink-3)">cancel from settings · 2 clicks · no dance</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ + CTA -->
+<section class="border-b-[1.5px] hair">
+  <div class="max-w-[1280px] mx-auto px-6 lg:px-10 py-20">
+    <div class="grid grid-cols-12 gap-10">
+      <div class="col-span-12 lg:col-span-4">
+        <span class="lbl">§ chapter five</span>
+        <h2 class="grid-cond text-[clamp(2.2rem,4.2vw,3.4rem)] leading-[0.96] mt-3">
+          Questions we<br/>
+          <span class="italic" style="font-family: var(--serif); letter-spacing: -0.01em">keep getting.</span>
+        </h2>
+        <p class="mt-5 text-[14.5px]" style="color: var(--ink-2)">Honest ones. If yours isn't here, the <a href="#" class="link-u">discord</a> is small enough that Jackson will probably answer.</p>
+      </div>
+      <div class="col-span-12 lg:col-span-8">
+        <div class="border-t-[1.5px] hair">
+          <details class="py-5 border-b-[1.5px] hair-2" open>
+            <summary class="flex items-center justify-between">
+              <span class="grid-face text-[18px] font-semibold">Does it actually work or is this a demo?</span>
+              <span class="caret text-[20px] rust">+</span>
+            </summary>
+            <p class="mt-4 text-[14.5px] max-w-[64ch]" style="color: var(--ink-2)">It works. 428 apps were built today. The median one deployed. Here's <a href="#" class="link-u">the receipt</a>.</p>
+          </details>
+          <details class="py-5 border-b-[1.5px] hair-2">
+            <summary class="flex items-center justify-between">
+              <span class="grid-face text-[18px] font-semibold">Do I get the source code or is it a black box?</span>
+              <span class="caret text-[20px] rust">+</span>
+            </summary>
+            <p class="mt-4 text-[14.5px] max-w-[64ch]" style="color: var(--ink-2)">You own the repo from the moment it builds. Self-host reads directly to disk. Studio exports to GitHub in one click.</p>
+          </details>
+          <details class="py-5 border-b-[1.5px] hair-2">
+            <summary class="flex items-center justify-between">
+              <span class="grid-face text-[18px] font-semibold">What stack does it generate?</span>
+              <span class="caret text-[20px] rust">+</span>
+            </summary>
+            <p class="mt-4 text-[14.5px] max-w-[64ch]" style="color: var(--ink-2)">Next.js 14 (App Router), Drizzle + Postgres, Tailwind, shadcn components, auth via Lucia. Swappable — the Planner will argue with you if you pick something it thinks won't work.</p>
+          </details>
+          <details class="py-5 border-b-[1.5px] hair-2">
+            <summary class="flex items-center justify-between">
+              <span class="grid-face text-[18px] font-semibold">How is it different from v0, Bolt, Lovable?</span>
+              <span class="caret text-[20px] rust">+</span>
+            </summary>
+            <p class="mt-4 text-[14.5px] max-w-[64ch]" style="color: var(--ink-2)">Those are (great) landing-page builders. Codefox generates a full-stack app — auth, DB, API, UI — as one repo, with four argued agents instead of one opinionated model. Plus: it's open source. You're never locked in.</p>
+          </details>
+          <details class="py-5">
+            <summary class="flex items-center justify-between">
+              <span class="grid-face text-[18px] font-semibold">I don't like the current codefox design. Is this the new one?</span>
+              <span class="caret text-[20px] rust">+</span>
+            </summary>
+            <p class="mt-4 text-[14.5px] max-w-[64ch]" style="color: var(--ink-2)">Yes. This is the one. We burned the purple gradients and started with a warm cream + rust palette, a variable grotesque in condensed mode, and type that looks like it came out of an editorial studio, not a template. If this isn't right either, the Stylist agent will happily try again — we put it in the app on purpose.</p>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section class="bg-ink text-[color:var(--paper)] relative overflow-hidden">
+  <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(40% 60% at 80% 50%, oklch(0.35 0.17 42 / 0.5), transparent 70%);"></div>
+  <div class="relative max-w-[1280px] mx-auto px-6 lg:px-10 py-28">
+    <div class="grid grid-cols-12 gap-8 items-end">
+      <div class="col-span-12 lg:col-span-8">
+        <span class="lbl" style="color: var(--mustard)">§ the end · start here</span>
+        <h2 class="hero-title text-[clamp(3rem,7vw,6.5rem)] mt-3">
+          Describe it.<br/>
+          <span style="color: var(--rust)">Watch it build.</span><br/>
+          <span class="italic" style="font-family: var(--serif); letter-spacing: -0.01em">Take the keys.</span>
+        </h2>
+      </div>
+      <div class="col-span-12 lg:col-span-4">
+        <p class="text-[16px]" style="color: oklch(0.85 0.015 80)">The shortest path from "I wonder if an app that" to a git repo you can push to Vercel is sitting in a browser tab.</p>
+        <div class="mt-7 space-y-3">
+          <a href="#" class="btn-prim w-full justify-center" style="background: var(--rust); border-color: var(--rust); color: var(--paper);">
+            Open the studio → free
+          </a>
+          <a href="#" class="btn-ghost w-full justify-center" style="border-color: var(--paper); color: var(--paper);">
+            Star on GitHub · 73 ★
+          </a>
+        </div>
+        <div class="sep-2 mt-6" style="background: oklch(0.32 0.02 60)"></div>
+        <div class="mt-4 flex items-center justify-between text-[11.5px] mono" style="color: oklch(0.6 0.015 60)">
+          <span>MIT · CodeFox-Repo/codefox</span>
+          <span class="flex items-center gap-1.5"><span class="live-dot"></span>live</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-ink text-[color:oklch(0.78_0.015_80)] border-t-[1.5px]" style="border-color: oklch(0.28 0.02 60)">
+  <div class="max-w-[1280px] mx-auto px-6 lg:px-10 py-14">
+    <div class="grid grid-cols-12 gap-8">
+      <div class="col-span-12 lg:col-span-5">
+        <div class="flex items-center gap-2.5 mb-5">
+          <svg width="28" height="28" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" rx="4" fill="var(--paper)"/><path d="M9 11 L23 11 M9 16 L19 16 M9 21 L15 21" stroke="var(--rust)" stroke-width="2.4" stroke-linecap="square"/></svg>
+          <span class="grid-face text-[22px] font-bold" style="color: var(--paper)">codefox</span>
+        </div>
+        <p class="italic text-[15px] max-w-[38ch]" style="color: oklch(0.72 0.015 80)">A next-gen project generator built by humans who got tired of every AI site looking the same.</p>
+      </div>
+      <div class="col-span-6 lg:col-span-2">
+        <div class="lbl mb-4" style="color: oklch(0.58 0.015 60)">product</div>
+        <ul class="space-y-2.5 text-[13.5px]">
+          <li><a href="#" class="hover:text-white">Studio</a></li>
+          <li><a href="#" class="hover:text-white">Self-host</a></li>
+          <li><a href="#" class="hover:text-white">Pricing</a></li>
+          <li><a href="#" class="hover:text-white">Changelog</a></li>
+        </ul>
+      </div>
+      <div class="col-span-6 lg:col-span-2">
+        <div class="lbl mb-4" style="color: oklch(0.58 0.015 60)">learn</div>
+        <ul class="space-y-2.5 text-[13.5px]">
+          <li><a href="#" class="hover:text-white">How it works</a></li>
+          <li><a href="#" class="hover:text-white">Agents</a></li>
+          <li><a href="#" class="hover:text-white">Stack</a></li>
+          <li><a href="#" class="hover:text-white">Example builds</a></li>
+        </ul>
+      </div>
+      <div class="col-span-12 lg:col-span-3">
+        <div class="lbl mb-4" style="color: oklch(0.58 0.015 60)">community</div>
+        <ul class="space-y-2.5 text-[13.5px]">
+          <li><a href="https://github.com/CodeFox-Repo/codefox" class="hover:text-white">github.com/CodeFox-Repo</a></li>
+          <li><a href="#" class="hover:text-white">Discord</a></li>
+          <li><a href="#" class="hover:text-white">Weekly builds</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="mt-14 pt-6 border-t flex items-center justify-between text-[11.5px] mono flex-wrap gap-3" style="border-color: oklch(0.28 0.02 60); color: oklch(0.58 0.015 60)">
+      <div>MIT · © 2026 CodeFox Contributors</div>
+      <div class="italic" style="color: oklch(0.72 0.015 80)">a whole app, from one paragraph.</div>
+      <div>v3.0.0-preview · 73★ · 19 contribs</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  document.querySelectorAll('button, a').forEach(el => {
+    el.addEventListener('click', e => {
+      const href = el.getAttribute('href');
+      if (!href || href === '#') {
+        console.log('[codefox] clicked:', el.textContent.trim().slice(0, 60));
+      }
+    });
+  });
+  document.querySelectorAll('input[type=text]').forEach(i => {
+    i.addEventListener('keydown', e => {
+      if (e.key === 'Enter') console.log('[codefox] prompt submitted:', e.target.value);
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,835 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DevSync — The calendar that thinks in commits</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-bg:        oklch(16% 0.015 260);
+    --color-surface:   oklch(20% 0.018 260);
+    --color-elevated:  oklch(24% 0.02 260);
+    --color-inset:     oklch(13% 0.012 260);
+    --color-hairline:  oklch(32% 0.015 260 / 0.6);
+    --color-text:      oklch(96% 0.01 90);
+    --color-muted:     oklch(68% 0.015 250);
+    --color-dim:       oklch(52% 0.015 260);
+    --color-accent:    oklch(78% 0.16 72);      /* warm amber — primary */
+    --color-accent-2:  oklch(82% 0.13 195);     /* cool cyan — positive */
+    --color-accent-3:  oklch(70% 0.18 20);      /* coral — conflict */
+    --radius-sm:       6px;
+    --radius-base:     10px;
+    --radius-lg:       16px;
+    --font-display:    'Fraunces', Georgia, serif;
+    --font-sans:       'DM Sans', system-ui, sans-serif;
+    --font-mono:       'JetBrains Mono', ui-monospace, monospace;
+    --ease-out:        cubic-bezier(0.22, 1, 0.36, 1);
+    --shadow-soft:     0 1px 0 oklch(30% 0.02 260 / 0.4), 0 20px 40px -20px oklch(8% 0 0 / 0.6);
+  }
+  html, body { background: var(--color-bg); color: var(--color-text); }
+  body { font-family: var(--font-sans); font-feature-settings: 'ss01','cv11'; }
+  .font-display { font-family: var(--font-display); font-variation-settings: 'opsz' 144; letter-spacing: -0.025em; }
+  .font-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .tnum { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
+  .hairline { border-color: var(--color-hairline); }
+  .grain::before {
+    content:""; position:absolute; inset:0; pointer-events:none; opacity:0.06; mix-blend-mode:overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+  .hero-glow {
+    background:
+      radial-gradient(60% 60% at 85% 10%, oklch(78% 0.16 72 / 0.22), transparent 60%),
+      radial-gradient(40% 50% at 10% 90%, oklch(82% 0.13 195 / 0.14), transparent 70%),
+      linear-gradient(180deg, oklch(18% 0.018 260) 0%, var(--color-bg) 100%);
+  }
+  /* Buttons & links */
+  .btn { display:inline-flex; align-items:center; gap:.5rem; padding:.75rem 1.1rem; border-radius: var(--radius-base); font-weight:600; font-size:14px; transition: transform 120ms var(--ease-out), background-color 120ms, box-shadow 160ms, color 120ms; }
+  .btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+  .btn:hover { transform: translateY(-2px); }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--color-accent); color: oklch(18% 0.02 60); box-shadow: 0 0 0 1px oklch(80% 0.12 72 / 0.5), 0 10px 30px -10px oklch(78% 0.16 72 / 0.5); }
+  .btn-primary:hover { background: oklch(84% 0.15 72); }
+  .btn-ghost { background: transparent; color: var(--color-text); border: 1px solid var(--color-hairline); }
+  .btn-ghost:hover { background: var(--color-elevated); border-color: oklch(45% 0.03 260); }
+  .link-underline { position:relative; }
+  .link-underline::after { content:""; position:absolute; left:0; right:0; bottom:-3px; height:1px; background: currentColor; transform: scaleX(0); transform-origin:left; transition: transform 200ms var(--ease-out); }
+  .link-underline:hover::after { transform: scaleX(1); }
+  .chip { display:inline-flex; align-items:center; gap:.4rem; padding:.2rem .55rem; border-radius:999px; font-size:11px; font-family: var(--font-mono); letter-spacing:.04em; border:1px solid var(--color-hairline); background: var(--color-surface); color: var(--color-muted); }
+  .kbd { font-family: var(--font-mono); font-size: 10.5px; padding:2px 6px; border-radius:5px; background: var(--color-inset); border:1px solid var(--color-hairline); color: var(--color-muted); box-shadow: inset 0 -1px 0 oklch(10% 0 0 / 0.5); }
+  /* Pulse */
+  @keyframes pulseRing { 0% { box-shadow: 0 0 0 0 oklch(82% 0.13 195 / 0.55);} 100% { box-shadow: 0 0 0 10px oklch(82% 0.13 195 / 0);} }
+  .live-dot { width:8px; height:8px; border-radius:999px; background: var(--color-accent-2); animation: pulseRing 1800ms var(--ease-out) infinite; }
+  @keyframes fadeUp { from { opacity:0; transform: translateY(8px);} to { opacity:1; transform:none; } }
+  main > section { animation: fadeUp 480ms var(--ease-out) both; }
+  main > section:nth-child(2) { animation-delay: .08s; }
+  main > section:nth-child(3) { animation-delay: .14s; }
+  main > section:nth-child(4) { animation-delay: .2s; }
+  /* Tab radios */
+  input[name="tab"]{ position:absolute; opacity:0; pointer-events:none; }
+  .tab-label { cursor:pointer; padding:.55rem .9rem; border-radius: 999px; font-size: 13px; color: var(--color-muted); border: 1px solid transparent; transition: all 160ms var(--ease-out); }
+  .tab-label:hover { color: var(--color-text); background: var(--color-elevated); }
+  #tab-calendar:checked ~ .tabs .tl-cal,
+  #tab-prs:checked ~ .tabs .tl-prs,
+  #tab-focus:checked ~ .tabs .tl-focus { background: var(--color-accent); color: oklch(18% 0.02 60); border-color: oklch(82% 0.14 72); box-shadow: 0 6px 20px -10px oklch(78% 0.16 72 / 0.6); }
+  .panel { display:none; }
+  #tab-calendar:checked ~ .panels .p-cal,
+  #tab-prs:checked ~ .panels .p-prs,
+  #tab-focus:checked ~ .panels .p-focus { display:block; animation: fadeUp 220ms var(--ease-out) both; }
+
+  /* Accordion */
+  details { border-bottom: 1px solid var(--color-hairline); }
+  details > summary { list-style:none; cursor:pointer; padding: 1.1rem 0; display:flex; justify-content: space-between; align-items:center; gap: 1rem; }
+  details > summary::-webkit-details-marker { display:none; }
+  details > summary .plus { width:22px; height:22px; display:grid; place-items:center; border-radius:999px; border:1px solid var(--color-hairline); color: var(--color-muted); transition: transform 200ms var(--ease-out), background 200ms, color 200ms; }
+  details[open] > summary .plus { transform: rotate(45deg); color: oklch(18% 0.02 60); background: var(--color-accent); border-color: oklch(82% 0.14 72); }
+
+  /* Toast */
+  #waitlist:target { display:flex !important; }
+  .toast { animation: fadeUp 280ms var(--ease-out) both; }
+
+  /* Scrollbar polish */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--color-elevated); border-radius: 999px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+  }
+
+  /* Layout helpers */
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, oklch(30% 0.015 260 / 0.25) 1px, transparent 1px),
+      linear-gradient(to bottom, oklch(30% 0.015 260 / 0.25) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse at 50% 30%, black 40%, transparent 75%);
+  }
+</style>
+</head>
+<body class="antialiased">
+
+<!-- Target-only modal for waitlist (CSS-only state via :target) -->
+<div id="waitlist" class="fixed inset-0 z-50" style="display:none;">
+  <a href="#" aria-label="Close" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></a>
+  <div role="dialog" aria-modal="true" class="toast relative mx-auto mt-24 w-[min(460px,92vw)] rounded-[16px] p-7" style="background: var(--color-surface); border:1px solid var(--color-hairline); box-shadow: var(--shadow-soft);">
+    <div class="flex items-center gap-2">
+      <span class="live-dot"></span>
+      <span class="text-xs font-mono tracking-widest uppercase" style="color: var(--color-muted);">Beta · seat 1,482 of 2,000</span>
+    </div>
+    <h3 class="font-display text-3xl mt-3" style="color: var(--color-text);">Join the private beta.</h3>
+    <p class="text-sm mt-2" style="color: var(--color-muted);">We ship weekly. First release on April 30 — macOS &amp; Linux, VS Code and JetBrains plugins in the box.</p>
+    <form class="mt-5 flex gap-2" onsubmit="event.preventDefault(); this.querySelector('button').textContent='✓  On the list'; this.querySelector('button').disabled=true;">
+      <input type="email" required placeholder="devin@company.dev" class="flex-1 px-3 py-2 rounded-[10px] text-sm" style="background: var(--color-inset); border:1px solid var(--color-hairline); color: var(--color-text);" />
+      <button class="btn btn-primary" type="submit">Request access</button>
+    </form>
+    <div class="mt-4 text-[11px] font-mono" style="color: var(--color-dim);">Press <span class="kbd">Esc</span> or click outside to close.</div>
+    <a href="#top" class="absolute top-3 right-3 w-8 h-8 grid place-items-center rounded-full" style="color: var(--color-muted); border:1px solid var(--color-hairline);" aria-label="Close">×</a>
+  </div>
+</div>
+
+<div id="top"></div>
+
+<!-- HEADER -->
+<header class="relative z-20" style="border-bottom:1px solid var(--color-hairline); background: oklch(16% 0.015 260 / 0.72); backdrop-filter: blur(10px);">
+  <div class="max-w-[1200px] mx-auto px-6 md:px-10 py-4 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2.5">
+      <!-- Constructed monogram logo -->
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="oklch(78% 0.16 72)"/>
+            <stop offset="1" stop-color="oklch(82% 0.13 195)"/>
+          </linearGradient>
+        </defs>
+        <rect x="1.5" y="1.5" width="25" height="25" rx="7" fill="none" stroke="url(#lg)" stroke-width="1.5"/>
+        <path d="M8 9 L8 19 M8 9 L14 14 L8 19" stroke="oklch(78% 0.16 72)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M20 9 L20 19 M20 9 L14 14 L20 19" stroke="oklch(82% 0.13 195)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="font-display text-[19px]" style="font-weight:500; letter-spacing:-0.01em;">DevSync</span>
+      <span class="chip ml-2 hidden sm:inline-flex">v0.9 · private beta</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-7 text-sm" style="color: var(--color-muted);">
+      <a href="#how" class="link-underline">How it works</a>
+      <a href="#integrations" class="link-underline">Integrations</a>
+      <a href="#pricing" class="link-underline">Pricing</a>
+      <a href="#changelog" class="link-underline">Changelog</a>
+    </nav>
+    <div class="flex items-center gap-2">
+      <a href="#top" class="hidden sm:inline-flex btn btn-ghost">Sign in</a>
+      <a href="#waitlist" class="btn btn-primary">Get early access</a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- HERO -->
+<section class="relative overflow-hidden hero-glow grain">
+  <div class="absolute inset-0 grid-bg pointer-events-none" aria-hidden="true"></div>
+  <div class="relative max-w-[1200px] mx-auto px-6 md:px-10 pt-20 pb-24 md:pt-28 md:pb-32 grid md:grid-cols-[1.05fr_0.95fr] gap-14 items-start">
+    <div>
+      <div class="flex items-center gap-2 mb-7">
+        <span class="live-dot"></span>
+        <span class="font-mono text-[11px] uppercase tracking-[0.24em]" style="color: var(--color-muted);">Shipping April 30 · 2026</span>
+      </div>
+      <h1 class="font-display text-[44px] sm:text-[58px] md:text-[74px] leading-[1.02]" style="font-weight:400;">
+        The calendar that <em style="color: var(--color-accent); font-style: italic; font-feature-settings:'ss01';">thinks in commits</em>, not in meetings.
+      </h1>
+      <p class="mt-7 text-[17px] max-w-[52ch] leading-[1.65]" style="color: var(--color-muted);">
+        DevSync reads your branches, PRs, standups and focus sessions — and quietly rearranges the day around the work that's actually moving. No more 11am syncs dropped on top of a deploy window.
+      </p>
+      <div class="mt-8 flex flex-wrap items-center gap-3">
+        <a href="#waitlist" class="btn btn-primary">
+          Request access
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1 7h11M7 2l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="#how" class="btn btn-ghost">
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 2l7 4-7 4V2z" fill="currentColor"/></svg>
+          Watch 90s demo
+        </a>
+        <span class="hidden sm:inline-flex items-center gap-2 text-xs" style="color: var(--color-dim);">
+          <span class="kbd">⌘</span><span class="kbd">K</span> to open command palette
+        </span>
+      </div>
+
+      <!-- Press / stat micro-row -->
+      <div class="mt-12 flex items-center gap-6 flex-wrap">
+        <div>
+          <div class="font-display text-3xl tnum" style="font-weight:500;">1,482</div>
+          <div class="text-[11px] font-mono uppercase tracking-widest mt-1" style="color: var(--color-dim);">Devs on beta</div>
+        </div>
+        <div class="w-px h-10" style="background: var(--color-hairline);"></div>
+        <div>
+          <div class="font-display text-3xl tnum" style="font-weight:500;">
+            <span style="color: var(--color-accent-2);">−37%</span>
+          </div>
+          <div class="text-[11px] font-mono uppercase tracking-widest mt-1" style="color: var(--color-dim);">Meetings · avg team</div>
+        </div>
+        <div class="w-px h-10" style="background: var(--color-hairline);"></div>
+        <div>
+          <div class="font-display text-3xl tnum" style="font-weight:500;">4.3h</div>
+          <div class="text-[11px] font-mono uppercase tracking-widest mt-1" style="color: var(--color-dim);">Daily deep-work recovered</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero visual: a fake app window with an agenda -->
+    <div class="relative">
+      <div class="absolute -inset-6 rounded-[24px]" style="background: radial-gradient(50% 60% at 60% 30%, oklch(78% 0.16 72 / 0.18), transparent 70%);" aria-hidden="true"></div>
+      <div class="relative rounded-[16px] overflow-hidden" style="background: var(--color-surface); border:1px solid var(--color-hairline); box-shadow: var(--shadow-soft);">
+        <!-- Window chrome -->
+        <div class="flex items-center justify-between px-4 py-3" style="border-bottom:1px solid var(--color-hairline); background: var(--color-elevated);">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full" style="background: oklch(68% 0.17 25);"></span>
+            <span class="w-2.5 h-2.5 rounded-full" style="background: oklch(82% 0.15 90);"></span>
+            <span class="w-2.5 h-2.5 rounded-full" style="background: oklch(76% 0.14 150);"></span>
+          </div>
+          <div class="font-mono text-[11px]" style="color: var(--color-muted);">devsync · Wed 22 Apr · <span id="heroclock" class="tnum">09:41:00</span></div>
+          <div class="flex items-center gap-1.5"><span class="live-dot"></span><span class="font-mono text-[10px] uppercase tracking-widest" style="color: var(--color-muted);">Live</span></div>
+        </div>
+
+        <!-- Agenda list -->
+        <div class="p-5 md:p-6 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="font-display text-lg" style="font-weight:500;">Today · Focus Wednesday</div>
+            <span class="chip" style="color: var(--color-accent-2); border-color: oklch(60% 0.1 195 / 0.4);">⎯ 3 conflicts resolved</span>
+          </div>
+
+          <!-- block: deep work -->
+          <div class="flex gap-3 items-stretch rounded-[10px] p-3" style="background: oklch(22% 0.02 90 / 0.5); border:1px solid oklch(50% 0.1 85 / 0.25);">
+            <div class="w-1 rounded-full" style="background: var(--color-accent);"></div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <div class="text-sm font-medium">Ship <span class="font-mono text-[12.5px]" style="color: var(--color-accent);">#2184</span> · payments retry queue</div>
+                <span class="font-mono text-[11px]" style="color: var(--color-muted);">09:00 → 12:00</span>
+              </div>
+              <div class="text-[12.5px] mt-1" style="color: var(--color-muted);">3 commits this morning · CI green · blocker on <span class="font-mono">stripe-webhook.ts</span></div>
+            </div>
+          </div>
+
+          <!-- block: moved meeting -->
+          <div class="flex gap-3 items-stretch rounded-[10px] p-3" style="background: var(--color-inset); border:1px dashed var(--color-hairline);">
+            <div class="w-1 rounded-full" style="background: var(--color-dim);"></div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <div class="text-sm" style="text-decoration: line-through; color: var(--color-muted);">Weekly sync · Product ↔ Infra</div>
+                <span class="font-mono text-[11px]" style="color: var(--color-dim);">moved to Thu 14:00</span>
+              </div>
+              <div class="text-[12.5px] mt-1" style="color: var(--color-dim);">Auto-rescheduled — 4 attendees in deploy window.</div>
+            </div>
+          </div>
+
+          <!-- block: pair review -->
+          <div class="flex gap-3 items-stretch rounded-[10px] p-3" style="background: var(--color-elevated); border:1px solid var(--color-hairline);">
+            <div class="w-1 rounded-full" style="background: var(--color-accent-2);"></div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <div class="text-sm font-medium">Pair review with Okonkwo → PR <span class="font-mono text-[12.5px]" style="color: var(--color-accent-2);">#2179</span></div>
+                <span class="font-mono text-[11px]" style="color: var(--color-muted);">13:30 → 14:15</span>
+              </div>
+              <div class="text-[12.5px] mt-1" style="color: var(--color-muted);">Suggested: GitHub → Linear → Zoom link stitched automatically.</div>
+            </div>
+          </div>
+
+          <!-- block: conflict -->
+          <div class="flex gap-3 items-stretch rounded-[10px] p-3" style="background: oklch(25% 0.06 25 / 0.25); border:1px solid oklch(60% 0.15 25 / 0.35);">
+            <div class="w-1 rounded-full" style="background: var(--color-accent-3);"></div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <div class="text-sm font-medium" style="color: oklch(85% 0.08 25);">Conflict · Hotfix freeze vs Design review</div>
+                <button class="font-mono text-[11px]" style="color: var(--color-accent);">Resolve →</button>
+              </div>
+              <div class="text-[12.5px] mt-1" style="color: var(--color-muted);">Hotfix branch active — Design review auto-shifted to 16:00.</div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-2 text-[11.5px] font-mono" style="color: var(--color-dim);">
+            <span>⌘⇧ P · quick reschedule</span>
+            <span>synced with main · 9s ago</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- floating notification -->
+      <div class="absolute -bottom-6 -left-6 hidden md:flex items-center gap-3 rounded-[12px] p-3 pr-5" style="background: var(--color-surface); border:1px solid var(--color-hairline); box-shadow: var(--shadow-soft);">
+        <div class="w-9 h-9 rounded-[8px] grid place-items-center" style="background: oklch(78% 0.16 72 / 0.15); color: var(--color-accent);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 7 9 18l-5-5"/></svg>
+        </div>
+        <div>
+          <div class="text-[13px] font-medium">CI passed on main</div>
+          <div class="text-[11px] font-mono" style="color: var(--color-muted);">deploy window opens 14:00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trust strip -->
+  <div class="relative max-w-[1200px] mx-auto px-6 md:px-10 pb-10">
+    <div class="flex items-center gap-6 flex-wrap justify-between py-5" style="border-top: 1px solid var(--color-hairline);">
+      <span class="font-mono text-[11px] uppercase tracking-[0.2em]" style="color: var(--color-dim);">Used by engineers at</span>
+      <div class="flex items-center gap-8 flex-wrap">
+        <span class="font-display text-xl" style="color: var(--color-muted); letter-spacing:-0.01em;">Chronograph</span>
+        <span class="font-display italic text-xl" style="color: var(--color-muted);">Parallax.io</span>
+        <span class="uppercase tracking-[0.3em] text-sm" style="color: var(--color-muted);">NORTHWIND</span>
+        <span class="font-mono text-sm" style="color: var(--color-muted);">/kernelhaus</span>
+        <span class="font-display text-xl" style="color: var(--color-muted);">Okabe &amp; Co.</span>
+        <span class="font-mono text-sm" style="color: var(--color-muted);">monument.dev</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM / VALUE PROPS -->
+<section id="how" class="relative">
+  <div class="max-w-[1200px] mx-auto px-6 md:px-10 py-24">
+    <div class="grid md:grid-cols-[0.9fr_1.1fr] gap-16 items-end mb-14">
+      <div>
+        <div class="font-mono text-[11px] uppercase tracking-[0.24em] mb-4" style="color: var(--color-accent);">/ 01 — The problem</div>
+        <h2 class="font-display text-[40px] md:text-[52px] leading-[1.05]" style="font-weight:400;">
+          Your calendar doesn't know you're <em style="font-style:italic; color: var(--color-accent-2);">mid-deploy</em>.
+        </h2>
+      </div>
+      <p class="text-[16.5px] leading-[1.7] max-w-[58ch]" style="color: var(--color-muted);">
+        Every engineer on a team of more than three is running two schedules — the one on their calendar and the one in their terminal. DevSync stitches them together by reading the actual work: branches, PRs, CI status, deploy locks, focus sessions. Meetings move when the work moves.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-[1px]" style="background: var(--color-hairline); border-radius: var(--radius-lg); overflow: hidden; border:1px solid var(--color-hairline);">
+      <!-- Card 01 -->
+      <article class="p-7 md:p-8" style="background: var(--color-surface);">
+        <div class="flex items-center justify-between">
+          <div class="font-mono text-[11px] uppercase tracking-[0.2em]" style="color: var(--color-dim);">01 · Signal</div>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true" style="color: var(--color-accent);">
+            <path d="M6 3v12a3 3 0 0 0 3 3h9M15 12l3 3-3 3M9 3a3 3 0 0 0-3 3"/>
+          </svg>
+        </div>
+        <h3 class="font-display text-[26px] mt-8" style="font-weight:500; letter-spacing:-0.01em;">Reads your repo, not just your inbox.</h3>
+        <p class="mt-3 text-[14.5px] leading-[1.65]" style="color: var(--color-muted);">
+          GitHub, GitLab, Linear, Shortcut, Jira, and 12 more. DevSync knows which PR blocks which meeting — and for whom.
+        </p>
+        <div class="mt-6 flex flex-wrap gap-1.5">
+          <span class="chip">branch</span><span class="chip">PR state</span><span class="chip">CI</span><span class="chip">deploy lock</span>
+        </div>
+      </article>
+
+      <!-- Card 02 -->
+      <article class="p-7 md:p-8" style="background: var(--color-surface);">
+        <div class="flex items-center justify-between">
+          <div class="font-mono text-[11px] uppercase tracking-[0.2em]" style="color: var(--color-dim);">02 · Reschedule</div>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true" style="color: var(--color-accent-2);">
+            <path d="M3 12a9 9 0 0 1 15.5-6.3M21 4v5h-5M21 12a9 9 0 0 1-15.5 6.3M3 20v-5h5"/>
+          </svg>
+        </div>
+        <h3 class="font-display text-[26px] mt-8" style="font-weight:500; letter-spacing:-0.01em;">Moves the meetings, not the makers.</h3>
+        <p class="mt-3 text-[14.5px] leading-[1.65]" style="color: var(--color-muted);">
+          When a hotfix lands, recurring syncs politely step aside. Attendees get one Slack line, not a 14-person Doodle.
+        </p>
+        <!-- mini sparkline -->
+        <svg class="mt-6" width="100%" height="44" viewBox="0 0 260 44" aria-hidden="true">
+          <path d="M0 30 L20 28 L40 24 L60 30 L80 20 L100 26 L120 14 L140 18 L160 10 L180 16 L200 8 L220 12 L240 6 L260 10" fill="none" stroke="oklch(82% 0.13 195)" stroke-width="1.6"/>
+          <path d="M0 30 L20 28 L40 24 L60 30 L80 20 L100 26 L120 14 L140 18 L160 10 L180 16 L200 8 L220 12 L240 6 L260 10 L260 44 L0 44 Z" fill="oklch(82% 0.13 195 / 0.12)"/>
+        </svg>
+      </article>
+
+      <!-- Card 03 -->
+      <article class="p-7 md:p-8" style="background: var(--color-surface);">
+        <div class="flex items-center justify-between">
+          <div class="font-mono text-[11px] uppercase tracking-[0.2em]" style="color: var(--color-dim);">03 · Protect</div>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true" style="color: var(--color-accent-3);">
+            <rect x="4" y="9" width="16" height="11" rx="2"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/>
+          </svg>
+        </div>
+        <h3 class="font-display text-[26px] mt-8" style="font-weight:500; letter-spacing:-0.01em;">Defends the deep-work block.</h3>
+        <p class="mt-3 text-[14.5px] leading-[1.65]" style="color: var(--color-muted);">
+          Focus windows appear on your team's calendar as opaque blocks — Slack status, DND, auto-reply, all in lockstep.
+        </p>
+        <div class="mt-6 flex items-center gap-2 text-[12px] font-mono" style="color: var(--color-muted);">
+          <span class="kbd">⌥</span><span class="kbd">F</span><span>→ enter flow for 90m</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURE DEEP-DIVE with tabs -->
+<section class="relative" style="background: oklch(14% 0.015 260);">
+  <div class="max-w-[1200px] mx-auto px-6 md:px-10 py-24">
+    <div class="flex items-end justify-between mb-10 flex-wrap gap-6">
+      <div>
+        <div class="font-mono text-[11px] uppercase tracking-[0.24em] mb-4" style="color: var(--color-accent);">/ 02 — The product</div>
+        <h2 class="font-display text-[40px] md:text-[52px] leading-[1.05] max-w-[18ch]" style="font-weight:400;">
+          One surface. Three views. No context switch.
+        </h2>
+      </div>
+      <p class="text-[15px] max-w-[46ch]" style="color: var(--color-muted);">
+        DevSync lives in a single keystroke (<span class="kbd">⌘K</span>). Switch between your calendar, your open PRs, and your focus plan without leaving it.
+      </p>
+    </div>
+
+    <!-- tabs controller -->
+    <input type="radio" name="tab" id="tab-calendar" checked />
+    <input type="radio" name="tab" id="tab-prs" />
+    <input type="radio" name="tab" id="tab-focus" />
+
+    <div class="tabs flex items-center gap-2 mb-6 flex-wrap">
+      <label for="tab-calendar" class="tab-label tl-cal">Calendar sync</label>
+      <label for="tab-prs" class="tab-label tl-prs">PR-aware planning</label>
+      <label for="tab-focus" class="tab-label tl-focus">Focus mode</label>
+      <span class="chip ml-auto"><span class="live-dot" style="width:6px;height:6px;"></span> 14 teammates online</span>
+    </div>
+
+    <div class="panels rounded-[16px] overflow-hidden" style="background: var(--color-surface); border:1px solid var(--color-hairline); box-shadow: var(--shadow-soft);">
+      <!-- PANEL: calendar -->
+      <div class="panel p-cal p-6 md:p-8">
+        <div class="grid md:grid-cols-[0.9fr_1.1fr] gap-8 items-start">
+          <div>
+            <h3 class="font-display text-[32px]" style="font-weight:500;">A week, re-planned in 300ms.</h3>
+            <p class="mt-3 text-[14.5px] leading-[1.7] max-w-[48ch]" style="color: var(--color-muted);">
+              Drop a new sprint goal. DevSync plans the week around your existing commitments, deploy freeze windows, and the commit velocity it observes in your repo.
+            </p>
+            <ul class="mt-6 space-y-3 text-[14px]">
+              <li class="flex gap-3"><span style="color: var(--color-accent);">✓</span><span>Bi-directional sync with Google, Outlook, iCloud, Fastmail</span></li>
+              <li class="flex gap-3"><span style="color: var(--color-accent);">✓</span><span>Respects office hours, timezones, DST edges</span></li>
+              <li class="flex gap-3"><span style="color: var(--color-accent);">✓</span><span>One-click undo for any auto-reschedule</span></li>
+            </ul>
+          </div>
+          <!-- Week grid SVG -->
+          <div class="rounded-[12px] p-5" style="background: var(--color-inset); border:1px solid var(--color-hairline);">
+            <div class="grid grid-cols-5 gap-2 text-[11px] font-mono uppercase tracking-widest mb-2" style="color: var(--color-dim);">
+              <div>Mon 20</div><div>Tue 21</div><div>Wed 22</div><div>Thu 23</div><div>Fri 24</div>
+            </div>
+            <div class="grid grid-cols-5 gap-2 h-[260px]">
+              <!-- Mon -->
+              <div class="flex flex-col gap-1.5">
+                <div class="rounded-[6px]" style="height:22%; background: oklch(78% 0.16 72 / 0.35); border-left:2px solid var(--color-accent);"></div>
+                <div class="rounded-[6px]" style="height:14%; background: var(--color-elevated);"></div>
+                <div class="rounded-[6px]" style="height:30%; background: oklch(82% 0.13 195 / 0.3); border-left:2px solid var(--color-accent-2);"></div>
+                <div class="rounded-[6px]" style="height:10%; background: var(--color-elevated);"></div>
+              </div>
+              <!-- Tue -->
+              <div class="flex flex-col gap-1.5">
+                <div class="rounded-[6px]" style="height:40%; background: oklch(78% 0.16 72 / 0.4); border-left:2px solid var(--color-accent);"></div>
+                <div class="rounded-[6px]" style="height:12%; background: var(--color-elevated);"></div>
+                <div class="rounded-[6px]" style="height:22%; background: var(--color-elevated);"></div>
+              </div>
+              <!-- Wed highlight -->
+              <div class="flex flex-col gap-1.5 rounded-[8px] p-1" style="outline: 1px dashed var(--color-accent); outline-offset:2px;">
+                <div class="rounded-[6px]" style="height:48%; background: oklch(78% 0.16 72 / 0.55); border-left:2px solid var(--color-accent);"></div>
+                <div class="rounded-[6px]" style="height:18%; background: oklch(82% 0.13 195 / 0.3); border-left:2px solid var(--color-accent-2);"></div>
+                <div class="rounded-[6px]" style="height:10%; background: var(--color-elevated);"></div>
+              </div>
+              <!-- Thu -->
+              <div class="flex flex-col gap-1.5">
+                <div class="rounded-[6px]" style="height:20%; background: var(--color-elevated);"></div>
+                <div class="rounded-[6px]" style="height:28%; background: oklch(70% 0.18 20 / 0.3); border-left:2px solid var(--color-accent-3);"></div>
+                <div class="rounded-[6px]" style="height:16%; background: var(--color-elevated);"></div>
+              </div>
+              <!-- Fri -->
+              <div class="flex flex-col gap-1.5">
+                <div class="rounded-[6px]" style="height:36%; background: oklch(78% 0.16 72 / 0.3); border-left:2px solid var(--color-accent);"></div>
+                <div class="rounded-[6px]" style="height:22%; background: oklch(82% 0.13 195 / 0.28); border-left:2px solid var(--color-accent-2);"></div>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center gap-4 text-[11px] font-mono" style="color: var(--color-muted);">
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm" style="background: var(--color-accent);"></span>deep work</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm" style="background: var(--color-accent-2);"></span>pairing</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm" style="background: var(--color-accent-3);"></span>conflict</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL: PRs -->
+      <div class="panel p-prs p-6 md:p-8">
+        <div class="grid md:grid-cols-[1.1fr_0.9fr] gap-8 items-start">
+          <!-- PR queue -->
+          <div class="rounded-[12px] overflow-hidden" style="background: var(--color-inset); border:1px solid var(--color-hairline);">
+            <div class="px-4 py-3 flex items-center justify-between text-[11px] font-mono uppercase tracking-widest" style="color: var(--color-dim); border-bottom:1px solid var(--color-hairline);">
+              <span>Open PRs · assigned to you</span>
+              <span class="tnum">7 of 11 reviewable now</span>
+            </div>
+            <ul>
+              <li class="px-4 py-3 flex items-center justify-between gap-3" style="border-bottom:1px solid var(--color-hairline);">
+                <div class="min-w-0">
+                  <div class="text-[13.5px] truncate">Add optimistic invalidation to <span class="font-mono" style="color: var(--color-accent);">queue-runner</span></div>
+                  <div class="text-[11px] font-mono mt-1" style="color: var(--color-muted);">#2184 · 2 commits · <span style="color: var(--color-accent-2);">CI green</span> · 11m ago</div>
+                </div>
+                <span class="chip" style="color: var(--color-accent); border-color: oklch(60% 0.1 72 / 0.5);">review → 13:30</span>
+              </li>
+              <li class="px-4 py-3 flex items-center justify-between gap-3" style="border-bottom:1px solid var(--color-hairline);">
+                <div class="min-w-0">
+                  <div class="text-[13.5px] truncate">Backport logger level parsing</div>
+                  <div class="text-[11px] font-mono mt-1" style="color: var(--color-muted);">#2179 · 1 commit · <span style="color: var(--color-accent-3);">CI failing</span> · 34m ago</div>
+                </div>
+                <span class="chip">blocked</span>
+              </li>
+              <li class="px-4 py-3 flex items-center justify-between gap-3" style="border-bottom:1px solid var(--color-hairline);">
+                <div class="min-w-0">
+                  <div class="text-[13.5px] truncate">Add Linear ↔ Shortcut adapter tests</div>
+                  <div class="text-[11px] font-mono mt-1" style="color: var(--color-muted);">#2176 · 4 commits · draft · yesterday</div>
+                </div>
+                <span class="chip">draft</span>
+              </li>
+              <li class="px-4 py-3 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="text-[13.5px] truncate">Remove internal metric <span class="font-mono">xtp.legacy.count</span></div>
+                  <div class="text-[11px] font-mono mt-1" style="color: var(--color-muted);">#2172 · Ready to merge · waiting on Elena</div>
+                </div>
+                <span class="chip" style="color: var(--color-accent-2); border-color: oklch(60% 0.1 195 / 0.5);">auto-merge</span>
+              </li>
+            </ul>
+            <div class="px-4 py-3 flex items-center justify-between text-[11px] font-mono" style="color: var(--color-dim); background: var(--color-surface);">
+              <span>Queue refreshes every 45s</span>
+              <span>avg review latency: 47m · <span style="color: var(--color-accent-2);">↓ 12m wk-over-wk</span></span>
+            </div>
+          </div>
+          <!-- Copy -->
+          <div>
+            <h3 class="font-display text-[32px]" style="font-weight:500;">Review when reviewing is cheap.</h3>
+            <p class="mt-3 text-[14.5px] leading-[1.7] max-w-[44ch]" style="color: var(--color-muted);">
+              DevSync parks your pending reviews in the next low-cost slot in your day — not in a 15-minute hole between two meetings.
+            </p>
+            <ul class="mt-6 space-y-3 text-[14px]">
+              <li class="flex gap-3"><span style="color: var(--color-accent);">·</span><span>PRs appear with a 1-line summary of what changed</span></li>
+              <li class="flex gap-3"><span style="color: var(--color-accent);">·</span><span>Auto-batches reviews in the same codebase</span></li>
+              <li class="flex gap-3"><span style="color: var(--color-accent);">·</span><span>Tells you when a reviewer is mid-deploy</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL: focus -->
+      <div class="panel p-focus p-6 md:p-8">
+        <div class="grid md:grid-cols-2 gap-8 items-start">
+          <div>
+            <h3 class="font-display text-[32px]" style="font-weight:500;">Focus mode, for real this time.</h3>
+            <p class="mt-3 text-[14.5px] leading-[1.7] max-w-[46ch]" style="color: var(--color-muted);">
+              One shortcut enters a 90-minute protected block. Slack goes DND, calendar auto-declines new invites, GitHub notifications batch.
+            </p>
+            <div class="mt-7 p-5 rounded-[12px]" style="background: var(--color-inset); border:1px solid var(--color-hairline);">
+              <div class="flex items-center justify-between">
+                <div class="font-display text-3xl tnum" style="font-weight:500; color: var(--color-accent);">01:14:22</div>
+                <span class="chip" style="color: var(--color-accent-2); border-color: oklch(60% 0.1 195 / 0.5);">DND active</span>
+              </div>
+              <div class="mt-3 h-1.5 rounded-full" style="background: var(--color-elevated);">
+                <div class="h-full rounded-full" style="width: 62%; background: linear-gradient(90deg, var(--color-accent), var(--color-accent-2));"></div>
+              </div>
+              <div class="mt-2 flex justify-between text-[11px] font-mono" style="color: var(--color-muted);">
+                <span>62% of 90m block</span><span>resume at 10:55</span>
+              </div>
+            </div>
+          </div>
+          <!-- Stat column -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-[12px] p-5" style="background: var(--color-inset); border:1px solid var(--color-hairline);">
+              <div class="text-[11px] font-mono uppercase tracking-widest" style="color: var(--color-dim);">This week</div>
+              <div class="mt-2 font-display text-[36px] tnum" style="font-weight:500;">18.4h</div>
+              <div class="text-[11.5px]" style="color: var(--color-muted);">deep work · <span style="color: var(--color-accent-2);">+2.1h vs last</span></div>
+            </div>
+            <div class="rounded-[12px] p-5" style="background: var(--color-inset); border:1px solid var(--color-hairline);">
+              <div class="text-[11px] font-mono uppercase tracking-widest" style="color: var(--color-dim);">Interruptions</div>
+              <div class="mt-2 font-display text-[36px] tnum" style="font-weight:500;">3</div>
+              <div class="text-[11.5px]" style="color: var(--color-muted);">vs <span class="tnum" style="color: var(--color-accent-3);">27</span> pre-DevSync</div>
+            </div>
+            <div class="rounded-[12px] p-5 col-span-2" style="background: var(--color-inset); border:1px solid var(--color-hairline);">
+              <div class="text-[11px] font-mono uppercase tracking-widest" style="color: var(--color-dim);">Time of day you ship most</div>
+              <!-- bar histogram -->
+              <svg viewBox="0 0 300 70" class="w-full mt-3" aria-hidden="true">
+                <g fill="oklch(78% 0.16 72 / 0.8)">
+                  <rect x="0" y="50" width="12" height="16" rx="2"/>
+                  <rect x="18" y="44" width="12" height="22" rx="2"/>
+                  <rect x="36" y="30" width="12" height="36" rx="2"/>
+                  <rect x="54" y="18" width="12" height="48" rx="2" fill="oklch(82% 0.13 195)"/>
+                  <rect x="72" y="8" width="12" height="58" rx="2" fill="oklch(82% 0.13 195)"/>
+                  <rect x="90" y="14" width="12" height="52" rx="2" fill="oklch(82% 0.13 195)"/>
+                  <rect x="108" y="28" width="12" height="38" rx="2"/>
+                  <rect x="126" y="40" width="12" height="26" rx="2"/>
+                  <rect x="144" y="46" width="12" height="20" rx="2"/>
+                  <rect x="162" y="34" width="12" height="32" rx="2"/>
+                  <rect x="180" y="22" width="12" height="44" rx="2"/>
+                  <rect x="198" y="16" width="12" height="50" rx="2" fill="oklch(82% 0.13 195)"/>
+                  <rect x="216" y="26" width="12" height="40" rx="2"/>
+                  <rect x="234" y="36" width="12" height="30" rx="2"/>
+                  <rect x="252" y="48" width="12" height="18" rx="2"/>
+                  <rect x="270" y="54" width="12" height="12" rx="2"/>
+                </g>
+              </svg>
+              <div class="mt-1 flex justify-between text-[10.5px] font-mono" style="color: var(--color-dim);">
+                <span>6a</span><span>9a</span><span>12p</span><span>3p</span><span>6p</span><span>9p</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON: before / after -->
+<section id="integrations" class="relative">
+  <div class="max-w-[1200px] mx-auto px-6 md:px-10 py-24">
+    <div class="mb-12">
+      <div class="font-mono text-[11px] uppercase tracking-[0.24em] mb-4" style="color: var(--color-accent);">/ 03 — Before and after</div>
+      <h2 class="font-display text-[40px] md:text-[52px] leading-[1.05] max-w-[22ch]" style="font-weight:400;">
+        Measured across 96 dev teams over the last two quarters.
+      </h2>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5">
+      <!-- metric 1 -->
+      <div class="rounded-[16px] p-7" style="background: var(--color-surface); border:1px solid var(--color-hairline);">
+        <div class="text-[11px] font-mono uppercase tracking-widest" style="color: var(--color-dim);">Meetings per week</div>
+        <div class="mt-6 flex items-end gap-6">
+          <div>
+            <div class="text-[11px] font-mono uppercase tracking-widest" style="color: var(--color-dim);">before</div>
+            <div class="font-display text-[44px] tnum" style="font-weight:500; color: var(--color-muted);">18.7</div>
+          </div>
+          <svg width="44" height="28" viewBox="0 0 44 28" aria-hidden="true"><path d="M2 14h36M30 6l8 8-8 8" fill="none" stroke="oklch(78% 0.16 72)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div>
+            <div class="text-[11px] font-mono uppercase tracking-widest" style="color: var(--color-accent);">after</div>
+            <div class="font-display text-[44px] tnum" style="font-weight:500; color: var(--color-text);">11.8</div>
+          </div>
+        </div>
+        <div class="mt-4 text-[12.5px]" style="color: var(--color-muted);"><span style="color: var(--color-accent-2);">▼ 37%</span> — most removed were recurring syncs with a single agenda item</div>
+      </div>
+      <!-- metric 2 -->
+      <div class="rounded-[16px] p-7" style="background: var(--color-surface); border:1px solid var(--color-hairline);">
+        <div class="text-[11px] font-mono uppercase tracking-widest" style="color: var(--color-dim);">Uninterrupted hours / day</div>
+        <div class="mt-6 flex items-end gap-6">
+          <div>
+            <div class="text-[11px] font-mono uppercase tracking-widest" style="color: var(--color-dim);">before</div>
+            <div class="font-display text-[44px] tnum" style="font-weight:500; color: var(--color-muted);">1.6h</div>
+          </div>
+          <svg width="44" height="28" viewBox="0 0 44 28" aria-hidden="true"><path d="M2 14h36M30 6l8 8-8 8" fill="none" stroke="oklch(78% 0.16 72)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div>
+            <div class="text-[11px] font-mono uppercase tracking-widest" style="color: var(--color-accent);">after</div>
+            <div class="font-display text-[44px] tnum" style="font-weight:500;">4.3h</div>
+          </div>
+        </div>
+        <div class="mt-4 text-[12.5px]" style="color: var(--color-muted);"><span style="color: var(--color-accent-2);">▲ 2.7h</span> — reclaimed by batching reviews and defending AM windows</div>
+      </div>
+      <!-- metric 3 -->
+      <div class="rounded-[16px] p-7" style="background: var(--color-surface); border:1px solid var(--color-hairline);">
+        <div class="text-[11px] font-mono uppercase tracking-widest" style="color: var(--color-dim);">PR review latency</div>
+        <div class="mt-6 flex items-end gap-6">
+          <div>
+            <div class="text-[11px] font-mono uppercase tracking-widest" style="color: var(--color-dim);">before</div>
+            <div class="font-display text-[44px] tnum" style="font-weight:500; color: var(--color-muted);">5h 48m</div>
+          </div>
+          <svg width="44" height="28" viewBox="0 0 44 28" aria-hidden="true"><path d="M2 14h36M30 6l8 8-8 8" fill="none" stroke="oklch(78% 0.16 72)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div>
+            <div class="text-[11px] font-mono uppercase tracking-widest" style="color: var(--color-accent);">after</div>
+            <div class="font-display text-[44px] tnum" style="font-weight:500;">47m</div>
+          </div>
+        </div>
+        <div class="mt-4 text-[12.5px]" style="color: var(--color-muted);"><span style="color: var(--color-accent-2);">▼ 86%</span> — reviews slot in when the reviewer is already in the code</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE -->
+<section class="relative" style="background: linear-gradient(180deg, oklch(14% 0.015 260), oklch(18% 0.02 70));">
+  <div class="relative max-w-[1100px] mx-auto px-6 md:px-10 py-24 grain">
+    <div class="flex items-start gap-6">
+      <div class="font-display text-[120px] leading-none hidden md:block" style="color: var(--color-accent); font-weight:400; margin-top:-24px;">“</div>
+      <div>
+        <blockquote class="font-display text-[28px] md:text-[38px] leading-[1.28] max-w-[30ch]" style="font-weight:400;">
+          The first calendar that stopped feeling like an <em style="font-style:italic; color: var(--color-accent);">adversary</em>. I trust it to move meetings the way I'd trust a good chief of staff.
+        </blockquote>
+        <div class="mt-8 flex items-center gap-4">
+          <!-- SVG initials avatar -->
+          <div class="w-11 h-11 rounded-full grid place-items-center font-display" style="background: linear-gradient(135deg, oklch(78% 0.16 72), oklch(82% 0.13 195)); color: oklch(18% 0.02 60); font-weight:500;">AR</div>
+          <div>
+            <div class="text-sm">Amira Rostami · Staff engineer</div>
+            <div class="font-mono text-[11.5px]" style="color: var(--color-muted);">Parallax.io · team of 42</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING / FAQ -->
+<section id="pricing" class="relative">
+  <div class="max-w-[1200px] mx-auto px-6 md:px-10 py-24 grid md:grid-cols-[1fr_1fr] gap-14">
+    <div>
+      <div class="font-mono text-[11px] uppercase tracking-[0.24em] mb-4" style="color: var(--color-accent);">/ 04 — Pricing</div>
+      <h2 class="font-display text-[40px] md:text-[48px] leading-[1.05]" style="font-weight:400;">
+        Free until your team outgrows it.
+      </h2>
+      <div class="mt-8 rounded-[16px] p-7" style="background: var(--color-surface); border:1px solid var(--color-hairline);">
+        <div class="flex items-baseline gap-2">
+          <span class="font-display text-[52px] tnum" style="font-weight:500;">$9</span>
+          <span class="text-sm" style="color: var(--color-muted);">/ developer / month, billed yearly</span>
+        </div>
+        <div class="text-[12.5px] mt-1" style="color: var(--color-dim);">Solo plan is free forever · Teams get 30 days on us.</div>
+        <ul class="mt-6 space-y-2.5 text-[14px]">
+          <li>· Unlimited repos, calendars, focus blocks</li>
+          <li>· SSO, SCIM, audit logs on Team plan</li>
+          <li>· macOS · Linux · Windows · VS Code · JetBrains · Zed</li>
+          <li>· Open-source core (AGPL), self-host available</li>
+        </ul>
+        <div class="mt-7 flex gap-3 flex-wrap">
+          <a href="#waitlist" class="btn btn-primary">Start free</a>
+          <a href="#top" class="btn btn-ghost">Compare plans</a>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="font-mono text-[11px] uppercase tracking-[0.24em] mb-4" style="color: var(--color-dim);">Common questions</div>
+      <div>
+        <details open>
+          <summary><span class="text-[15.5px]">Does DevSync store my repo contents?</span><span class="plus">+</span></summary>
+          <p class="pb-5 text-[14px] max-w-[60ch]" style="color: var(--color-muted);">No. DevSync reads metadata only — branch names, PR state, CI status — via your existing OAuth scopes. Code never leaves your Git host.</p>
+        </details>
+        <details>
+          <summary><span class="text-[15.5px]">How does it handle timezones across a team?</span><span class="plus">+</span></summary>
+          <p class="pb-5 text-[14px] max-w-[60ch]" style="color: var(--color-muted);">Every scheduling decision respects the attendee list's intersection of working hours. DST boundaries are normalized on both ends of the recurrence.</p>
+        </details>
+        <details>
+          <summary><span class="text-[15.5px]">What if I don't want my calendar rewritten automatically?</span><span class="plus">+</span></summary>
+          <p class="pb-5 text-[14px] max-w-[60ch]" style="color: var(--color-muted);">Turn on "propose-only" mode. DevSync will suggest moves as silent drafts in your inbox — you approve, nothing shifts without your nod.</p>
+        </details>
+        <details>
+          <summary><span class="text-[15.5px]">Can I self-host?</span><span class="plus">+</span></summary>
+          <p class="pb-5 text-[14px] max-w-[60ch]" style="color: var(--color-muted);">Yes. The core scheduler is AGPL and runs on a single Postgres + one worker. Enterprise tier adds SAML, regional data residency, and 24/7 support.</p>
+        </details>
+        <details>
+          <summary><span class="text-[15.5px]">Which calendar providers are supported?</span><span class="plus">+</span></summary>
+          <p class="pb-5 text-[14px] max-w-[60ch]" style="color: var(--color-muted);">Google Workspace, Microsoft 365, iCloud, and Fastmail today. Proton and self-hosted CalDAV arrive this summer.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CLOSING CTA -->
+<section id="changelog" class="relative">
+  <div class="max-w-[1100px] mx-auto px-6 md:px-10 py-24 text-center">
+    <div class="inline-flex items-center gap-2 chip mb-6"><span class="live-dot"></span> 518 seats left · closes May 15</div>
+    <h2 class="font-display text-[44px] md:text-[64px] leading-[1.05]" style="font-weight:400;">
+      Ship more. Meet less.<br/><em style="color: var(--color-accent); font-style:italic;">Sleep earlier.</em>
+    </h2>
+    <p class="mt-5 text-[16px] max-w-[52ch] mx-auto" style="color: var(--color-muted);">
+      DevSync is in private beta with 96 teams and growing. Request a seat — we'll onboard you this week.
+    </p>
+    <div class="mt-9 flex justify-center flex-wrap gap-3">
+      <a href="#waitlist" class="btn btn-primary">Request early access</a>
+      <a href="mailto:hi@devsync.app" class="btn btn-ghost">hi@devsync.app</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="relative" style="border-top:1px solid var(--color-hairline);">
+  <div class="max-w-[1200px] mx-auto px-6 md:px-10 py-12 grid md:grid-cols-[1.3fr_1fr_1fr_1fr] gap-8">
+    <div>
+      <div class="flex items-center gap-2.5">
+        <svg width="24" height="24" viewBox="0 0 28 28" aria-hidden="true">
+          <rect x="1.5" y="1.5" width="25" height="25" rx="7" fill="none" stroke="oklch(78% 0.16 72)" stroke-width="1.5"/>
+          <path d="M8 9 L8 19 M8 9 L14 14 L8 19" stroke="oklch(78% 0.16 72)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M20 9 L20 19 M20 9 L14 14 L20 19" stroke="oklch(82% 0.13 195)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="font-display text-[17px]" style="font-weight:500;">DevSync</span>
+      </div>
+      <p class="mt-4 text-[13px] max-w-[38ch]" style="color: var(--color-muted);">A calendar that reads your repo, not your inbox. Made in Amsterdam &amp; Lagos by three engineers who got tired of rescheduling themselves.</p>
+      <div class="mt-4 text-[11px] font-mono" style="color: var(--color-dim);">© 2026 DevSync Labs B.V.</div>
+    </div>
+    <div>
+      <div class="text-[11px] font-mono uppercase tracking-widest mb-4" style="color: var(--color-dim);">Product</div>
+      <ul class="space-y-2 text-[13.5px]" style="color: var(--color-muted);">
+        <li><a href="#how" class="link-underline">How it works</a></li>
+        <li><a href="#integrations" class="link-underline">Integrations</a></li>
+        <li><a href="#pricing" class="link-underline">Pricing</a></li>
+        <li><a href="#changelog" class="link-underline">Changelog</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="text-[11px] font-mono uppercase tracking-widest mb-4" style="color: var(--color-dim);">Company</div>
+      <ul class="space-y-2 text-[13.5px]" style="color: var(--color-muted);">
+        <li><a href="#top" class="link-underline">Manifesto</a></li>
+        <li><a href="#top" class="link-underline">Engineering journal</a></li>
+        <li><a href="#top" class="link-underline">Security · SOC 2</a></li>
+        <li><a href="#top" class="link-underline">Hiring · 3 roles</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="text-[11px] font-mono uppercase tracking-widest mb-4" style="color: var(--color-dim);">Get the update log</div>
+      <form class="flex gap-2" onsubmit="event.preventDefault(); this.querySelector('button').textContent='✓'; this.querySelector('button').disabled=true;">
+        <input type="email" required placeholder="you@dev.to" class="flex-1 min-w-0 px-3 py-2 rounded-[8px] text-[13px]" style="background: var(--color-inset); border:1px solid var(--color-hairline); color: var(--color-text);" />
+        <button class="btn btn-primary" type="submit" style="padding:.55rem .85rem;">→</button>
+      </form>
+      <div class="mt-3 text-[11px] font-mono" style="color: var(--color-dim);">Weekly. Short. No recruiters.</div>
+    </div>
+  </div>
+  <div class="max-w-[1200px] mx-auto px-6 md:px-10 pb-8 flex items-center justify-between text-[11.5px] font-mono flex-wrap gap-3" style="color: var(--color-dim);">
+    <span>Build f8c1d92 · <span id="footclock" class="tnum">09:41:00</span> UTC</span>
+    <span>Status: <span style="color: var(--color-accent-2);">● all systems nominal</span></span>
+  </div>
+</footer>
+
+<script>
+  // One permitted interval: live clock pulse, shared by two surfaces.
+  (function(){
+    function pad(n){ return n < 10 ? '0' + n : '' + n; }
+    function tick(){
+      var d = new Date();
+      var s = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+      var a = document.getElementById('heroclock'); if (a) a.textContent = s;
+      var b = document.getElementById('footclock'); if (b) b.textContent = s;
+    }
+    tick();
+    setInterval(tick, 1000);
+  })();
+</script>
+
+</body>
+</html>

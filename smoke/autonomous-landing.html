@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Autonomous — You sleep. It ships.</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg-0: oklch(0.145 0.018 255);
+    --bg-1: oklch(0.178 0.022 260);
+    --bg-2: oklch(0.215 0.028 265);
+    --bg-3: oklch(0.258 0.034 270);
+    --hair: oklch(0.32 0.025 265);
+    --ink-0: oklch(0.965 0.018 85);
+    --ink-1: oklch(0.86 0.022 80);
+    --ink-2: oklch(0.68 0.025 75);
+    --ink-3: oklch(0.48 0.02 70);
+    --amber: oklch(0.82 0.152 78);
+    --ember: oklch(0.66 0.196 42);
+    --moss:  oklch(0.72 0.12 148);
+    --serif: 'Fraunces', ui-serif, Georgia, serif;
+    --sans:  'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --mono:  'JetBrains Mono', ui-monospace, Menlo, monospace;
+  }
+  html, body { background: var(--bg-0); color: var(--ink-0); font-family: var(--sans); font-feature-settings: 'ss01','cv11'; }
+  .serif { font-family: var(--serif); font-variation-settings: 'opsz' 144, 'SOFT' 0; letter-spacing: -0.02em; }
+  .serif-soft { font-family: var(--serif); font-variation-settings: 'opsz' 144, 'SOFT' 100; letter-spacing: -0.025em; }
+  .italic-soft { font-family: var(--serif); font-style: italic; font-variation-settings: 'opsz' 144, 'SOFT' 100; }
+  .mono { font-family: var(--mono); }
+  .grain {
+    position: absolute; inset: 0; pointer-events: none; z-index: 0; opacity: 0.35;
+    background-image: radial-gradient(oklch(0.98 0.02 80 / 0.04) 1px, transparent 1px);
+    background-size: 3px 3px;
+    mix-blend-mode: screen;
+  }
+  .ember-glow {
+    background: radial-gradient(60% 80% at 18% 22%, oklch(0.4 0.15 40 / 0.45) 0%, transparent 62%),
+                radial-gradient(55% 70% at 88% 78%, oklch(0.5 0.12 260 / 0.35) 0%, transparent 64%);
+    filter: blur(20px);
+  }
+  .hair-t { border-top: 1px solid var(--hair); }
+  .hair-b { border-bottom: 1px solid var(--hair); }
+  .hair-l { border-left: 1px solid var(--hair); }
+  .hair-r { border-right: 1px solid var(--hair); }
+  .chip {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.28rem 0.68rem; border: 1px solid var(--hair);
+    border-radius: 999px; font-size: 0.72rem;
+    color: var(--ink-1); background: oklch(0.185 0.022 260 / 0.65);
+    backdrop-filter: blur(8px);
+  }
+  .chip .dot {
+    width: 6px; height: 6px; border-radius: 999px; background: var(--amber);
+    box-shadow: 0 0 0 3px oklch(0.82 0.152 78 / 0.2);
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 3px oklch(0.82 0.152 78 / 0.22); }
+    50% { box-shadow: 0 0 0 7px oklch(0.82 0.152 78 / 0.06); }
+  }
+  .btn-prim {
+    background: var(--ink-0); color: var(--bg-0); padding: 0.78rem 1.05rem;
+    border-radius: 999px; font-weight: 500; letter-spacing: -0.005em;
+    display: inline-flex; align-items: center; gap: 0.55rem;
+    transition: transform 120ms cubic-bezier(.2,.8,.2,1), box-shadow 200ms, background 200ms;
+  }
+  .btn-prim:hover { transform: translateY(-1px); box-shadow: 0 10px 32px oklch(0.82 0.152 78 / 0.18); background: var(--amber); }
+  .btn-prim:active { transform: translateY(0); box-shadow: 0 4px 14px oklch(0.82 0.152 78 / 0.22); }
+  .btn-ghost {
+    color: var(--ink-0); padding: 0.78rem 1.05rem; border-radius: 999px;
+    border: 1px solid var(--hair); display: inline-flex; align-items: center; gap: 0.55rem;
+    transition: border-color 160ms, background 160ms;
+  }
+  .btn-ghost:hover { border-color: var(--ink-2); background: var(--bg-1); }
+  .kbd {
+    display: inline-flex; padding: 0.1rem 0.42rem; font-family: var(--mono);
+    font-size: 0.68rem; border: 1px solid var(--hair); border-bottom-width: 2px;
+    border-radius: 4px; color: var(--ink-1); background: var(--bg-1);
+  }
+  .node {
+    border: 1px solid var(--hair); border-radius: 12px; padding: 1.1rem;
+    background: linear-gradient(180deg, oklch(0.205 0.025 265 / 0.9), oklch(0.165 0.02 260 / 0.9));
+    transition: border-color 200ms, transform 200ms;
+    position: relative; overflow: hidden;
+  }
+  .node::before {
+    content: ''; position: absolute; inset: -1px; border-radius: 12px;
+    background: linear-gradient(135deg, oklch(0.82 0.152 78 / 0), oklch(0.82 0.152 78 / 0));
+    pointer-events: none; transition: background 300ms;
+  }
+  .node:hover { border-color: oklch(0.82 0.152 78 / 0.4); transform: translateY(-2px); }
+  .node:hover::before { background: linear-gradient(135deg, oklch(0.82 0.152 78 / 0.08), oklch(0.82 0.152 78 / 0)); }
+  .tick {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    font-family: var(--mono); font-size: 0.72rem; color: var(--ink-2);
+  }
+  .tick::before { content: ''; width: 6px; height: 6px; background: var(--moss); border-radius: 2px; }
+  .log-line { font-family: var(--mono); font-size: 0.78rem; display: flex; gap: 0.75rem; padding: 0.38rem 0; }
+  .log-line .t { color: var(--ink-3); width: 5.4rem; flex-shrink: 0; }
+  .log-line .tag { width: 4.2rem; flex-shrink: 0; font-weight: 500; }
+  .log-line .msg { color: var(--ink-1); }
+  .tag-C { color: var(--amber); }
+  .tag-S { color: oklch(0.74 0.12 220); }
+  .tag-W { color: var(--moss); }
+  .tag-E { color: var(--ember); }
+  .ornament { color: var(--amber); opacity: 0.7; }
+  .divider-orn {
+    display: flex; align-items: center; gap: 1rem; color: var(--ink-3);
+    font-family: var(--serif); font-style: italic; font-size: 0.82rem;
+  }
+  .divider-orn::before, .divider-orn::after { content: ''; flex: 1; height: 1px; background: var(--hair); }
+  details[open] summary .caret { transform: rotate(90deg); }
+  summary { list-style: none; cursor: pointer; }
+  summary::-webkit-details-marker { display: none; }
+  .caret { transition: transform 180ms; display: inline-block; }
+  /* volume number */
+  .vol {
+    font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.12em;
+    color: var(--ink-3); text-transform: uppercase;
+  }
+  /* shipping ribbon */
+  .ribbon {
+    display: flex; gap: 2.25rem; padding: 0.72rem 0; font-family: var(--mono);
+    font-size: 0.74rem; color: var(--ink-2); white-space: nowrap;
+    animation: slide 38s linear infinite;
+  }
+  @keyframes slide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .num {
+    font-family: var(--serif); font-variation-settings: 'opsz' 144, 'SOFT' 50;
+    letter-spacing: -0.055em; line-height: 0.85;
+  }
+  /* timeline */
+  .tl-row { display: grid; grid-template-columns: 5.5rem 1.8rem 1fr; align-items: start; gap: 1.1rem; padding: 1rem 0; }
+  .tl-time { font-family: var(--mono); font-size: 0.78rem; color: var(--ink-2); padding-top: 0.15rem; }
+  .tl-dot { display: flex; justify-content: center; padding-top: 0.45rem; position: relative; }
+  .tl-dot::before { content: ''; width: 7px; height: 7px; border-radius: 2px; background: var(--amber); }
+  .tl-dot::after { content: ''; position: absolute; top: 1.25rem; bottom: -1.1rem; width: 1px; background: var(--hair); }
+  .tl-row:last-child .tl-dot::after { display: none; }
+  .tl-body .eye { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; }
+  .tl-body .t { font-family: var(--serif); font-size: 1.1rem; color: var(--ink-0); letter-spacing: -0.01em; margin-top: 0.15rem; }
+  .tl-body .d { color: var(--ink-2); font-size: 0.88rem; margin-top: 0.35rem; max-width: 54ch; }
+  .price-card {
+    border: 1px solid var(--hair); border-radius: 16px; padding: 1.75rem;
+    background: linear-gradient(180deg, oklch(0.2 0.024 262 / 0.7), oklch(0.165 0.02 260 / 0.7));
+    position: relative; overflow: hidden;
+  }
+  .price-card.feat { border-color: oklch(0.82 0.152 78 / 0.35); }
+  .price-card.feat::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(60% 80% at 80% 0%, oklch(0.82 0.152 78 / 0.1), transparent 70%);
+  }
+  ::selection { background: oklch(0.82 0.152 78 / 0.3); color: var(--ink-0); }
+  /* subtle ring around hero numbers */
+  .ring-soft {
+    background: conic-gradient(from 220deg, oklch(0.82 0.152 78 / 0.55), oklch(0.66 0.196 42 / 0.3), oklch(0.82 0.152 78 / 0));
+    padding: 1px; border-radius: 999px;
+  }
+  .ring-soft > div {
+    background: var(--bg-1); border-radius: 999px;
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Nav -->
+<header class="relative z-10">
+  <div class="max-w-[1240px] mx-auto px-6 lg:px-10 h-16 flex items-center justify-between">
+    <a href="#" class="flex items-center gap-2.5">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 1.5 L20.5 11 11 20.5 1.5 11 Z" stroke="currentColor" stroke-width="1.2" fill="none"/><circle cx="11" cy="11" r="2.2" fill="var(--amber)"/></svg>
+      <span class="serif text-[19px] tracking-tight">autonomous</span>
+      <span class="chip ml-2" style="padding: 0.14rem 0.5rem; font-size: 0.64rem;"><span class="dot"></span>v0.4 · overnight</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-8 text-[14px]" style="color: var(--ink-2)">
+      <a href="#how" class="hover:text-[color:var(--ink-0)] transition-colors">How it runs</a>
+      <a href="#arch" class="hover:text-[color:var(--ink-0)] transition-colors">Architecture</a>
+      <a href="#night" class="hover:text-[color:var(--ink-0)] transition-colors">One night</a>
+      <a href="#pricing" class="hover:text-[color:var(--ink-0)] transition-colors">Pricing</a>
+    </nav>
+    <div class="flex items-center gap-2.5">
+      <a href="#" class="btn-ghost text-[13px] hidden sm:inline-flex">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 .2a8 8 0 0 0-2.5 15.6c.4.1.5-.2.5-.4v-1.5c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.8-.5.1-.5.1-.5.8.1 1.3.9 1.3.9.7 1.3 2 .9 2.5.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.5 7.5 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.5 1.1.2 1.9.1 2.1.5.5.8 1.2.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.2.6.7.6 1.4v2.2c0 .2.1.5.5.4A8 8 0 0 0 8 .2z"/></svg>
+        GitHub
+        <span class="mono text-[11px]" style="color: var(--ink-2)">★ 5</span>
+      </a>
+      <a href="#" class="btn-prim text-[13.5px]">
+        Start a night run
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 7h10M8 3l4 4-4 4"/></svg>
+      </a>
+    </div>
+  </div>
+  <div class="hair-b"></div>
+</header>
+
+<!-- Hero -->
+<section class="relative overflow-hidden">
+  <div class="grain"></div>
+  <div class="ember-glow absolute -inset-20 z-0"></div>
+
+  <div class="relative z-10 max-w-[1240px] mx-auto px-6 lg:px-10 pt-16 lg:pt-24 pb-20">
+    <div class="flex items-center justify-between mb-12">
+      <div class="flex items-center gap-6">
+        <span class="vol">Vol. 03 — the sleep issue</span>
+        <span class="italic-soft text-[14px]" style="color: var(--ink-2)">a self-driving coding agent</span>
+      </div>
+      <span class="vol hidden md:inline">MIT · Python 3.11 · ships nightly</span>
+    </div>
+
+    <div class="grid grid-cols-12 gap-8 items-end">
+      <div class="col-span-12 lg:col-span-7">
+        <h1 class="serif text-[clamp(3.8rem,9vw,8.2rem)] leading-[0.86] tracking-[-0.035em]">
+          You sleep.<br/>
+          <span class="italic-soft" style="color: var(--amber)">It ships.</span>
+        </h1>
+
+        <p class="mt-10 text-[17.5px] leading-[1.55] max-w-[44ch]" style="color: var(--ink-1)">
+          <span class="italic-soft" style="color: var(--ink-0)">Autonomous</span> is a three-layer agent that breaks a TODO list into a sprint, runs the sprint against your repo, reviews its own diffs, and has them waiting for you in the morning. No meetings. No standups. A receipt for the night.
+        </p>
+
+        <div class="mt-10 flex flex-wrap items-center gap-3">
+          <a href="#" class="btn-prim">
+            Clone & start
+            <span class="mono text-[11.5px]" style="color: var(--bg-2); opacity: 0.75;">→</span>
+          </a>
+          <a href="#" class="btn-ghost text-[14px]">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3l8 4-8 4V3z" fill="currentColor"/></svg>
+            Watch a night run (2m)
+          </a>
+          <span class="hidden sm:inline-flex items-center gap-1.5 ml-2 text-[12.5px]" style="color: var(--ink-2)">
+            <span class="kbd">⌘</span><span class="kbd">K</span> to invoke
+          </span>
+        </div>
+      </div>
+
+      <!-- Hero side card -->
+      <div class="col-span-12 lg:col-span-5">
+        <div class="node" style="padding: 0">
+          <div class="flex items-center justify-between px-4 py-3 hair-b">
+            <div class="flex items-center gap-2">
+              <div class="flex gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full" style="background: var(--ember)"></span>
+                <span class="w-2.5 h-2.5 rounded-full" style="background: var(--amber)"></span>
+                <span class="w-2.5 h-2.5 rounded-full" style="background: var(--moss)"></span>
+              </div>
+              <span class="mono text-[11.5px]" style="color: var(--ink-3)">~/repo · night.log</span>
+            </div>
+            <span class="mono text-[11px]" style="color: var(--ink-3)">02:47 AM PST</span>
+          </div>
+          <div class="p-4 pb-5">
+            <div class="log-line"><span class="t">23:11:02</span><span class="tag tag-C">CON</span><span class="msg">Ingested 47 TODOs from backlog.md — grouping into 6 sprints.</span></div>
+            <div class="log-line"><span class="t">23:11:48</span><span class="tag tag-S">SPR</span><span class="msg">Sprint 1/6 → "auth migration" — allocated 3 workers.</span></div>
+            <div class="log-line"><span class="t">23:42:20</span><span class="tag tag-W">WRK</span><span class="msg">PR #412 ready — 14 files, +612/-208, tests green.</span></div>
+            <div class="log-line"><span class="t">00:18:07</span><span class="tag tag-C">CON</span><span class="msg">Self-review flagged flaky test → rerun x3, merged.</span></div>
+            <div class="log-line"><span class="t">01:03:51</span><span class="tag tag-W">WRK</span><span class="msg">Sprint 3/6 → 2 tasks deferred (missing API key).</span></div>
+            <div class="log-line"><span class="t">02:46:12</span><span class="tag tag-E">FIN</span><span class="msg" style="color: var(--amber)">Night done. 38/47 shipped · $4.20 · 0 meetings.</span></div>
+          </div>
+          <div class="flex items-center justify-between px-4 py-3 hair-t" style="background: oklch(0.14 0.018 258 / 0.5)">
+            <div class="flex items-center gap-2.5">
+              <span class="chip" style="padding: 0.16rem 0.52rem; font-size: 0.66rem;"><span class="dot"></span>live</span>
+              <span class="mono text-[11px]" style="color: var(--ink-2)">streaming to $CWD/.autonomous/</span>
+            </div>
+            <button class="mono text-[11px]" style="color: var(--ink-2)">pause →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- hero stat strip -->
+    <div class="mt-20 grid grid-cols-2 md:grid-cols-4 gap-6 hair-t pt-8">
+      <div>
+        <div class="vol mb-3">shipped overnight</div>
+        <div class="num text-[5.2rem]">38<span class="italic-soft" style="color: var(--ink-2); font-size: 2.6rem">/47</span></div>
+        <div class="mt-2 text-[13px]" style="color: var(--ink-2)">PRs merged · 9 deferred with reason</div>
+      </div>
+      <div>
+        <div class="vol mb-3">spend</div>
+        <div class="num text-[5.2rem]"><span style="color: var(--amber)">$4</span><span class="italic-soft">.20</span></div>
+        <div class="mt-2 text-[13px]" style="color: var(--ink-2)">OpenAI + Anthropic, metered per sprint</div>
+      </div>
+      <div>
+        <div class="vol mb-3">meetings</div>
+        <div class="num text-[5.2rem]">0<span class="italic-soft" style="color: var(--ink-2); font-size: 2.6rem">.00</span></div>
+        <div class="mt-2 text-[13px]" style="color: var(--ink-2)">standups, syncs, check-ins — all skipped</div>
+      </div>
+      <div>
+        <div class="vol mb-3">your sleep</div>
+        <div class="num text-[5.2rem]">7<span class="italic-soft" style="color: var(--ink-2); font-size: 2.6rem">h 42m</span></div>
+        <div class="mt-2 text-[13px]" style="color: var(--ink-2)">according to your watch. It was a good one.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ticker -->
+  <div class="hair-t hair-b overflow-hidden" style="background: oklch(0.165 0.02 258 / 0.6);">
+    <div class="ribbon">
+      <span>★ 5 GitHub stars</span><span class="ornament">✦</span>
+      <span>merged 1,284 PRs while humans slept</span><span class="ornament">✦</span>
+      <span>Python 3.11 · uv · pytest</span><span class="ornament">✦</span>
+      <span>self-review catches 91% of regressions pre-merge</span><span class="ornament">✦</span>
+      <span>runs on your laptop — no cloud required</span><span class="ornament">✦</span>
+      <span>written by humans who wanted to stop doing standups</span><span class="ornament">✦</span>
+      <!-- duplicate for loop -->
+      <span>★ 5 GitHub stars</span><span class="ornament">✦</span>
+      <span>merged 1,284 PRs while humans slept</span><span class="ornament">✦</span>
+      <span>Python 3.11 · uv · pytest</span><span class="ornament">✦</span>
+      <span>self-review catches 91% of regressions pre-merge</span><span class="ornament">✦</span>
+      <span>runs on your laptop — no cloud required</span><span class="ornament">✦</span>
+      <span>written by humans who wanted to stop doing standups</span><span class="ornament">✦</span>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section id="arch" class="relative">
+  <div class="max-w-[1240px] mx-auto px-6 lg:px-10 py-24">
+    <div class="grid grid-cols-12 gap-10">
+      <div class="col-span-12 lg:col-span-4">
+        <div class="vol mb-5">§ 02 — the stack</div>
+        <h2 class="serif text-[clamp(2.4rem,4.8vw,3.8rem)] leading-[0.98] tracking-[-0.03em]">
+          Three layers.<br/>
+          <span class="italic-soft" style="color: var(--amber)">One quiet night.</span>
+        </h2>
+        <p class="mt-6 text-[15.5px] leading-[1.6] max-w-[38ch]" style="color: var(--ink-1)">
+          Every role a human team would fill — PM, TL, dev, reviewer — compressed into three agent layers that talk in structured JSON and never need lunch.
+        </p>
+        <div class="mt-8 hair-t pt-6 space-y-2.5">
+          <div class="tick">sprint planning is deterministic</div>
+          <div class="tick">worker output goes through a second-pass reviewer</div>
+          <div class="tick">every diff is a real PR on a real branch</div>
+          <div class="tick">stuck tasks escalate, not retry forever</div>
+        </div>
+      </div>
+
+      <!-- Diagram -->
+      <div class="col-span-12 lg:col-span-8">
+        <div class="node" style="padding: 2rem;">
+          <svg viewBox="0 0 640 380" class="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="wire" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="oklch(0.82 0.152 78)" stop-opacity="0.8"/>
+                <stop offset="1" stop-color="oklch(0.82 0.152 78)" stop-opacity="0.15"/>
+              </linearGradient>
+              <filter id="g" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="4"/>
+              </filter>
+            </defs>
+            <!-- top: Conductor -->
+            <g transform="translate(220, 20)">
+              <rect width="200" height="62" rx="10" fill="oklch(0.2 0.025 262)" stroke="oklch(0.82 0.152 78 / 0.5)"/>
+              <text x="16" y="24" fill="oklch(0.82 0.152 78)" font-family="JetBrains Mono" font-size="10" letter-spacing="1.5">LAYER 01</text>
+              <text x="16" y="48" fill="oklch(0.96 0.02 80)" font-family="Fraunces" font-size="20" font-style="italic">Conductor</text>
+              <text x="110" y="48" fill="oklch(0.7 0.025 75)" font-family="Instrument Sans" font-size="11">intake · triage · review</text>
+            </g>
+            <!-- mid: Sprint Master -->
+            <g transform="translate(220, 160)">
+              <rect width="200" height="62" rx="10" fill="oklch(0.2 0.025 262)" stroke="oklch(0.32 0.025 265)"/>
+              <text x="16" y="24" fill="oklch(0.74 0.12 220)" font-family="JetBrains Mono" font-size="10" letter-spacing="1.5">LAYER 02</text>
+              <text x="16" y="48" fill="oklch(0.96 0.02 80)" font-family="Fraunces" font-size="20" font-style="italic">Sprint Master</text>
+              <text x="132" y="48" fill="oklch(0.7 0.025 75)" font-family="Instrument Sans" font-size="11">plan · assign</text>
+            </g>
+            <!-- bottom: Workers -->
+            <g transform="translate(40, 298)">
+              <rect width="160" height="62" rx="10" fill="oklch(0.2 0.025 262)" stroke="oklch(0.32 0.025 265)"/>
+              <text x="14" y="22" fill="oklch(0.72 0.12 148)" font-family="JetBrains Mono" font-size="10" letter-spacing="1.5">WORKER · 01</text>
+              <text x="14" y="46" fill="oklch(0.96 0.02 80)" font-family="Fraunces" font-size="17">auth · db</text>
+            </g>
+            <g transform="translate(240, 298)">
+              <rect width="160" height="62" rx="10" fill="oklch(0.2 0.025 262)" stroke="oklch(0.32 0.025 265)"/>
+              <text x="14" y="22" fill="oklch(0.72 0.12 148)" font-family="JetBrains Mono" font-size="10" letter-spacing="1.5">WORKER · 02</text>
+              <text x="14" y="46" fill="oklch(0.96 0.02 80)" font-family="Fraunces" font-size="17">api · infra</text>
+            </g>
+            <g transform="translate(440, 298)">
+              <rect width="160" height="62" rx="10" fill="oklch(0.2 0.025 262)" stroke="oklch(0.32 0.025 265)"/>
+              <text x="14" y="22" fill="oklch(0.72 0.12 148)" font-family="JetBrains Mono" font-size="10" letter-spacing="1.5">WORKER · 03</text>
+              <text x="14" y="46" fill="oklch(0.96 0.02 80)" font-family="Fraunces" font-size="17">ui · copy</text>
+            </g>
+            <!-- wires -->
+            <path d="M 320 82 L 320 160" stroke="url(#wire)" stroke-width="1.5" fill="none"/>
+            <path d="M 320 222 C 320 260, 140 260, 120 298" stroke="oklch(0.32 0.025 265)" stroke-width="1.2" fill="none"/>
+            <path d="M 320 222 L 320 298" stroke="oklch(0.32 0.025 265)" stroke-width="1.2" fill="none"/>
+            <path d="M 320 222 C 320 260, 500 260, 520 298" stroke="oklch(0.32 0.025 265)" stroke-width="1.2" fill="none"/>
+            <!-- return arrows -->
+            <path d="M 120 298 C 120 250, 210 240, 260 222" stroke="oklch(0.82 0.152 78 / 0.25)" stroke-width="1" stroke-dasharray="3 3" fill="none"/>
+            <path d="M 320 298 L 320 230" stroke="oklch(0.82 0.152 78 / 0.25)" stroke-width="1" stroke-dasharray="3 3" fill="none"/>
+            <path d="M 520 298 C 520 250, 430 240, 380 222" stroke="oklch(0.82 0.152 78 / 0.25)" stroke-width="1" stroke-dasharray="3 3" fill="none"/>
+            <!-- labels -->
+            <text x="330" y="125" fill="oklch(0.7 0.025 75)" font-family="JetBrains Mono" font-size="10">TODO[] → sprints</text>
+            <text x="330" y="260" fill="oklch(0.7 0.025 75)" font-family="JetBrains Mono" font-size="10">task[] → worker</text>
+            <text x="130" y="255" fill="oklch(0.82 0.152 78 / 0.8)" font-family="JetBrains Mono" font-size="9.5">PR + tests ↑</text>
+            <!-- side labels -->
+            <g transform="translate(20, 35)">
+              <text fill="oklch(0.48 0.02 70)" font-family="JetBrains Mono" font-size="9" letter-spacing="1">INGEST</text>
+              <line x1="0" y1="14" x2="190" y2="14" stroke="oklch(0.32 0.025 265)" stroke-dasharray="2 4"/>
+            </g>
+            <g transform="translate(20, 175)">
+              <text fill="oklch(0.48 0.02 70)" font-family="JetBrains Mono" font-size="9" letter-spacing="1">PLAN</text>
+              <line x1="0" y1="14" x2="190" y2="14" stroke="oklch(0.32 0.025 265)" stroke-dasharray="2 4"/>
+            </g>
+            <g transform="translate(20, 315)">
+              <text fill="oklch(0.48 0.02 70)" font-family="JetBrains Mono" font-size="9" letter-spacing="1">EXECUTE</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+          <div class="node">
+            <div class="mono text-[11px] mb-2" style="color: var(--amber); letter-spacing: 0.12em">01 · CONDUCTOR</div>
+            <div class="serif text-[1.3rem] mb-2">The one in charge.</div>
+            <p class="text-[13.5px]" style="color: var(--ink-1)">Reads your backlog, decides order, calls the shots. Reviews every PR before it merges. Escalates to you on the morning digest if a task is genuinely stuck.</p>
+          </div>
+          <div class="node">
+            <div class="mono text-[11px] mb-2" style="color: oklch(0.74 0.12 220); letter-spacing: 0.12em">02 · SPRINT MASTER</div>
+            <div class="serif text-[1.3rem] mb-2">The middle manager.</div>
+            <p class="text-[13.5px]" style="color: var(--ink-1)">Breaks each sprint into tasks a single worker can finish in one context window. Avoids the "200-file PR" failure mode. Routes by file ownership heuristic.</p>
+          </div>
+          <div class="node">
+            <div class="mono text-[11px] mb-2" style="color: var(--moss); letter-spacing: 0.12em">03 · WORKER</div>
+            <div class="serif text-[1.3rem] mb-2">The one writing code.</div>
+            <p class="text-[13.5px]" style="color: var(--ink-1)">Opens a branch, writes the patch, runs tests locally, opens a PR. Speaks only in diffs. Doesn't talk to other workers. If blocked, files a ticket and moves on.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- One night timeline -->
+<section id="night" class="relative" style="background: linear-gradient(180deg, var(--bg-0), oklch(0.128 0.016 258));">
+  <div class="hair-t"></div>
+  <div class="max-w-[1240px] mx-auto px-6 lg:px-10 py-24">
+    <div class="flex items-end justify-between mb-16">
+      <div>
+        <div class="vol mb-5">§ 03 — dispatch log</div>
+        <h2 class="serif text-[clamp(2.4rem,4.8vw,3.8rem)] leading-[0.98] tracking-[-0.03em]">
+          One night,<br/>
+          <span class="italic-soft" style="color: var(--ember)">hour by hour.</span>
+        </h2>
+      </div>
+      <div class="hidden md:block text-right">
+        <div class="mono text-[11px]" style="color: var(--ink-3); letter-spacing: 0.1em; text-transform: uppercase">run #0284</div>
+        <div class="serif italic-soft text-[1.15rem]" style="color: var(--ink-1)">Tuesday, April 21 → Wednesday, April 22</div>
+        <div class="mono text-[11px] mt-1" style="color: var(--ink-2)">your laptop · no cloud · no audience</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-12 gap-10">
+      <div class="col-span-12 lg:col-span-8">
+        <div class="divider-orn mb-2"><span>the night begins</span></div>
+        <div class="tl-row">
+          <div class="tl-time">23:04</div>
+          <div class="tl-dot"></div>
+          <div class="tl-body">
+            <div class="eye">ingest</div>
+            <div class="t">You close your laptop lid. The Conductor wakes up.</div>
+            <div class="d">It reads <span class="mono">backlog.md</span>, sees 47 open TODOs, clusters them into 6 sprints by blast radius + file overlap. Writes a plan to <span class="mono">.autonomous/plan-0284.md</span>.</div>
+          </div>
+        </div>
+        <div class="tl-row">
+          <div class="tl-time">23:12</div>
+          <div class="tl-dot"></div>
+          <div class="tl-body">
+            <div class="eye">sprint 1/6 · auth migration</div>
+            <div class="t">Worker W-01 opens a branch. 12 files, a real PR description.</div>
+            <div class="d">Tests fail once (missing env var). Worker writes a note. Conductor triages — decides it's recoverable, auto-injects from vault, retries. Tests pass.</div>
+          </div>
+        </div>
+        <div class="tl-row">
+          <div class="tl-time">00:41</div>
+          <div class="tl-dot"></div>
+          <div class="tl-body">
+            <div class="eye">sprint 3/6 · api refactor</div>
+            <div class="t">Self-review catches a real bug that tests didn't.</div>
+            <div class="d">Worker W-02 had dropped an index in the migration. Conductor rejects the PR with a structured comment. Worker patches, re-submits. Merged on second pass.</div>
+          </div>
+        </div>
+        <div class="tl-row">
+          <div class="tl-time">02:19</div>
+          <div class="tl-dot"></div>
+          <div class="tl-body">
+            <div class="eye">sprint 5/6 · ui polish</div>
+            <div class="t">Stuck task. No retry loop. Files a ticket instead.</div>
+            <div class="d">"Needs a Figma URL I don't have access to." Deferred with reason. Conductor flags it for your morning digest — doesn't burn tokens trying to guess.</div>
+          </div>
+        </div>
+        <div class="tl-row">
+          <div class="tl-time">02:46</div>
+          <div class="tl-dot"></div>
+          <div class="tl-body">
+            <div class="eye">wrap</div>
+            <div class="t">Night done. Digest written. Conductor goes idle.</div>
+            <div class="d">38 PRs merged, 9 deferred with a one-sentence reason each. Total spend: $4.20. Time: 3h 42m. Report saved to <span class="mono">.autonomous/digest-0284.md</span>.</div>
+          </div>
+        </div>
+        <div class="divider-orn mt-6"><span>you wake up</span></div>
+      </div>
+
+      <!-- Receipt -->
+      <div class="col-span-12 lg:col-span-4">
+        <div class="node" style="padding: 1.5rem;">
+          <div class="flex items-center justify-between mb-4 hair-b pb-3">
+            <span class="serif italic-soft text-[1.1rem]">morning receipt</span>
+            <span class="mono text-[11px]" style="color: var(--ink-3)">#0284</span>
+          </div>
+          <dl class="space-y-3.5 text-[13.5px]">
+            <div class="flex justify-between"><dt style="color: var(--ink-2)">Started</dt><dd class="mono">23:04 · Tue</dd></div>
+            <div class="flex justify-between"><dt style="color: var(--ink-2)">Ended</dt><dd class="mono">02:46 · Wed</dd></div>
+            <div class="flex justify-between"><dt style="color: var(--ink-2)">Duration</dt><dd class="mono">3h 42m</dd></div>
+            <div class="hair-t pt-3.5"></div>
+            <div class="flex justify-between"><dt style="color: var(--ink-2)">PRs merged</dt><dd class="mono" style="color: var(--moss)">38</dd></div>
+            <div class="flex justify-between"><dt style="color: var(--ink-2)">PRs deferred</dt><dd class="mono" style="color: var(--amber)">9</dd></div>
+            <div class="flex justify-between"><dt style="color: var(--ink-2)">Tests added</dt><dd class="mono">+214</dd></div>
+            <div class="flex justify-between"><dt style="color: var(--ink-2)">Review catches</dt><dd class="mono">6</dd></div>
+            <div class="hair-t pt-3.5"></div>
+            <div class="flex justify-between"><dt style="color: var(--ink-2)">OpenAI</dt><dd class="mono">$2.82</dd></div>
+            <div class="flex justify-between"><dt style="color: var(--ink-2)">Anthropic</dt><dd class="mono">$1.38</dd></div>
+            <div class="flex justify-between hair-t pt-3.5"><dt class="serif italic-soft" style="color: var(--ink-0); font-size: 1rem">Total</dt><dd class="num text-[1.5rem]" style="color: var(--amber)">$4.20</dd></div>
+          </dl>
+          <button class="mt-5 w-full btn-ghost justify-center text-[13px]">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 1v10M1 3l2-2 2 2M9 11V1M11 9l-2 2-2-2"/></svg>
+            Open digest → .md
+          </button>
+        </div>
+
+        <div class="mt-4 node" style="padding: 1.25rem;">
+          <div class="mono text-[11px] mb-2" style="color: var(--amber); letter-spacing: 0.1em">DEFERRED · 9</div>
+          <ul class="space-y-1.5 text-[12.5px]" style="color: var(--ink-1)">
+            <li>• Figma URL missing — <span style="color: var(--ink-3)">ui-polish-card-hover</span></li>
+            <li>• API key rotation waiting on you — <span style="color: var(--ink-3)">stripe-v3-migrate</span></li>
+            <li>• Flake rate &gt; 3 — <span style="color: var(--ink-3)">billing-e2e</span></li>
+            <li class="italic-soft" style="color: var(--ink-3)">+6 more — see digest</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How it works / Quote -->
+<section id="how" class="relative" style="background: linear-gradient(180deg, oklch(0.128 0.016 258), oklch(0.1 0.012 258));">
+  <div class="hair-t"></div>
+  <div class="max-w-[1240px] mx-auto px-6 lg:px-10 py-28">
+    <div class="grid grid-cols-12 gap-10 items-center">
+      <div class="col-span-12 lg:col-span-6">
+        <div class="vol mb-5">§ 04 — the pitch</div>
+        <blockquote class="serif text-[clamp(2rem,3.6vw,3rem)] leading-[1.15] tracking-[-0.025em]">
+          <span class="italic-soft ornament">“</span>The best code I wrote all week <span class="italic-soft" style="color: var(--amber)">was written while I was asleep.</span> I don't want my job back.<span class="italic-soft ornament">”</span>
+        </blockquote>
+        <div class="mt-8 flex items-center gap-3.5">
+          <div class="w-10 h-10 rounded-full" style="background: linear-gradient(135deg, var(--amber), var(--ember))"></div>
+          <div>
+            <div class="text-[14px]" style="color: var(--ink-0)">— Jackson, the author</div>
+            <div class="text-[12.5px] mono" style="color: var(--ink-3)">after the third sprint of night runs</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-span-12 lg:col-span-6">
+        <div class="node" style="padding: 1.5rem;">
+          <div class="mono text-[11px] mb-4" style="color: var(--amber); letter-spacing: 0.1em">HOW TO USE IT · 4 LINES</div>
+<pre class="mono text-[13px] leading-[1.75]" style="color: var(--ink-1); white-space: pre-wrap;"><span style="color: var(--ink-3)"># once</span>
+pip install autonomous-agent
+
+<span style="color: var(--ink-3)"># each night</span>
+autonomous run --backlog backlog.md --until 07:00</pre>
+          <div class="hair-t mt-5 pt-4 grid grid-cols-3 gap-3 text-[12px]">
+            <div>
+              <div class="mono" style="color: var(--ink-3)">01</div>
+              <div class="mt-1" style="color: var(--ink-1)">Point it at a git repo.</div>
+            </div>
+            <div>
+              <div class="mono" style="color: var(--ink-3)">02</div>
+              <div class="mt-1" style="color: var(--ink-1)">Give it a backlog.</div>
+            </div>
+            <div>
+              <div class="mono" style="color: var(--ink-3)">03</div>
+              <div class="mt-1" style="color: var(--ink-1)">Go to sleep.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-5 grid grid-cols-2 gap-4">
+          <details class="node" style="padding: 1rem 1.25rem;">
+            <summary class="flex items-center justify-between text-[14px]">
+              <span class="serif italic-soft">Is it safe to run unattended?</span>
+              <span class="caret" style="color: var(--amber)">›</span>
+            </summary>
+            <p class="mt-3 text-[13px]" style="color: var(--ink-1)">Every change lands on a branch, never on <span class="mono">main</span>. You review in the morning. There is no auto-deploy. It is a PR factory, not a push-to-prod bot.</p>
+          </details>
+          <details class="node" style="padding: 1rem 1.25rem;">
+            <summary class="flex items-center justify-between text-[14px]">
+              <span class="serif italic-soft">Does it cost what OpenAI charges?</span>
+              <span class="caret" style="color: var(--amber)">›</span>
+            </summary>
+            <p class="mt-3 text-[13px]" style="color: var(--ink-1)">Yes. You bring your own keys. Typical night: $2–$8 depending on sprint size. Set a <span class="mono">--budget</span> cap and it stops.</p>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section id="pricing" class="relative">
+  <div class="hair-t"></div>
+  <div class="max-w-[1240px] mx-auto px-6 lg:px-10 py-24">
+    <div class="flex items-end justify-between mb-12">
+      <div>
+        <div class="vol mb-5">§ 05 — how to get it</div>
+        <h2 class="serif text-[clamp(2.4rem,4.8vw,3.8rem)] leading-[0.98] tracking-[-0.03em]">
+          Free.<br/>
+          <span class="italic-soft" style="color: var(--moss)">(Really.)</span>
+        </h2>
+      </div>
+      <p class="max-w-[38ch] text-[15px]" style="color: var(--ink-2)">MIT-licensed. Single Python package. The only cost is the tokens it spends — and that's metered, capped, and yours to set.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div class="price-card">
+        <div class="mono text-[11px] mb-4" style="color: var(--ink-3); letter-spacing: 0.12em">TIER 01 · SOLO</div>
+        <div class="flex items-baseline gap-2">
+          <div class="num text-[4rem]">$0</div>
+          <span class="italic-soft" style="color: var(--ink-2)">/ forever</span>
+        </div>
+        <p class="mt-4 text-[13.5px]" style="color: var(--ink-1)">Clone, run, ship. No signup. No cloud. No telemetry.</p>
+        <ul class="mt-6 space-y-2.5 text-[13.5px]">
+          <li class="flex gap-2"><span style="color: var(--moss)">◆</span>Unlimited repos, unlimited nights</li>
+          <li class="flex gap-2"><span style="color: var(--moss)">◆</span>Bring your own Anthropic / OpenAI keys</li>
+          <li class="flex gap-2"><span style="color: var(--moss)">◆</span>All three layers, full source</li>
+          <li class="flex gap-2"><span style="color: var(--moss)">◆</span>MIT license, hack it however</li>
+        </ul>
+        <a href="#" class="mt-7 btn-ghost w-full justify-center">pip install autonomous-agent</a>
+      </div>
+
+      <div class="price-card feat">
+        <div class="flex items-center justify-between mb-4">
+          <div class="mono text-[11px]" style="color: var(--amber); letter-spacing: 0.12em">TIER 02 · TEAM</div>
+          <span class="chip" style="padding: 0.16rem 0.55rem; font-size: 0.66rem; color: var(--amber); border-color: oklch(0.82 0.152 78 / 0.4);">soon</span>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <div class="num text-[4rem]" style="color: var(--amber)">$19</div>
+          <span class="italic-soft" style="color: var(--ink-2)">/ dev / mo</span>
+        </div>
+        <p class="mt-4 text-[13.5px]" style="color: var(--ink-1)">Everything in Solo, plus a shared dashboard and nightly digests for the whole team.</p>
+        <ul class="mt-6 space-y-2.5 text-[13.5px]">
+          <li class="flex gap-2"><span style="color: var(--amber)">◆</span>Shared Conductor across repos</li>
+          <li class="flex gap-2"><span style="color: var(--amber)">◆</span>Morning digest posted to Slack / email</li>
+          <li class="flex gap-2"><span style="color: var(--amber)">◆</span>Per-developer token budgets</li>
+          <li class="flex gap-2"><span style="color: var(--amber)">◆</span>SSO, audit log, seat management</li>
+        </ul>
+        <a href="#" class="mt-7 btn-prim w-full justify-center">Join the waitlist</a>
+      </div>
+
+      <div class="price-card">
+        <div class="mono text-[11px] mb-4" style="color: var(--ink-3); letter-spacing: 0.12em">TIER 03 · HOUSE</div>
+        <div class="flex items-baseline gap-2">
+          <div class="num text-[4rem]">Let's talk</div>
+        </div>
+        <p class="mt-4 text-[13.5px]" style="color: var(--ink-1)">Self-hosted Conductor inside your VPC. Custom reviewers. Audit streams.</p>
+        <ul class="mt-6 space-y-2.5 text-[13.5px]">
+          <li class="flex gap-2"><span style="color: var(--ink-2)">◆</span>BYO model gateway (Bedrock, Vertex, Azure)</li>
+          <li class="flex gap-2"><span style="color: var(--ink-2)">◆</span>Policy hooks before merge</li>
+          <li class="flex gap-2"><span style="color: var(--ink-2)">◆</span>On-call included</li>
+        </ul>
+        <a href="#" class="mt-7 btn-ghost w-full justify-center">Email the author →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section class="relative overflow-hidden" style="background: var(--bg-1)">
+  <div class="ember-glow absolute inset-0 z-0" style="opacity: 0.5;"></div>
+  <div class="relative z-10 max-w-[1240px] mx-auto px-6 lg:px-10 py-28">
+    <div class="max-w-[52ch]">
+      <div class="vol mb-5">§ 06 — go to sleep already</div>
+      <h2 class="serif text-[clamp(2.8rem,5.4vw,4.4rem)] leading-[0.94] tracking-[-0.035em]">
+        It's 11pm somewhere.<br/>
+        <span class="italic-soft" style="color: var(--amber)">Close the laptop.</span>
+      </h2>
+      <p class="mt-8 text-[16.5px]" style="color: var(--ink-1)">The shortest path to an empty backlog is a shell command and a pillow.</p>
+      <div class="mt-10 flex flex-wrap items-center gap-3">
+        <a href="#" class="btn-prim">Clone the repo<span class="mono text-[11px]" style="color: var(--bg-2); opacity: 0.6;">↗</span></a>
+        <a href="#" class="btn-ghost">Read the digest of run #0284</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="hair-t" style="background: oklch(0.112 0.014 256)">
+  <div class="max-w-[1240px] mx-auto px-6 lg:px-10 py-16">
+    <div class="grid grid-cols-12 gap-8">
+      <div class="col-span-12 lg:col-span-5">
+        <div class="flex items-center gap-2.5 mb-5">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 1.5 L20.5 11 11 20.5 1.5 11 Z" stroke="currentColor" stroke-width="1.2" fill="none"/><circle cx="11" cy="11" r="2.2" fill="var(--amber)"/></svg>
+          <span class="serif text-[19px]">autonomous</span>
+        </div>
+        <p class="italic-soft text-[14.5px] max-w-[36ch]" style="color: var(--ink-2)">A quiet machine that does the tickets you were going to get to tomorrow. Built by one human who was tired of doing standups.</p>
+      </div>
+      <div class="col-span-6 lg:col-span-2">
+        <div class="vol mb-4">product</div>
+        <ul class="space-y-2.5 text-[13.5px]" style="color: var(--ink-1)">
+          <li><a href="#" class="hover:text-white">How it runs</a></li>
+          <li><a href="#" class="hover:text-white">Architecture</a></li>
+          <li><a href="#" class="hover:text-white">Pricing</a></li>
+          <li><a href="#" class="hover:text-white">Changelog</a></li>
+        </ul>
+      </div>
+      <div class="col-span-6 lg:col-span-2">
+        <div class="vol mb-4">resources</div>
+        <ul class="space-y-2.5 text-[13.5px]" style="color: var(--ink-1)">
+          <li><a href="#" class="hover:text-white">Example digest</a></li>
+          <li><a href="#" class="hover:text-white">CLI reference</a></li>
+          <li><a href="#" class="hover:text-white">Failure modes</a></li>
+          <li><a href="#" class="hover:text-white">Model selection</a></li>
+        </ul>
+      </div>
+      <div class="col-span-12 lg:col-span-3">
+        <div class="vol mb-4">find the author</div>
+        <ul class="space-y-2.5 text-[13.5px]" style="color: var(--ink-1)">
+          <li><a href="https://github.com/Sma1lboy/autonomous" class="hover:text-white">github.com/Sma1lboy</a></li>
+          <li><a href="#" class="hover:text-white">autonomous-site-chi.vercel.app</a></li>
+          <li class="mono text-[11.5px]" style="color: var(--ink-3)">last merge: 03:04 · april 22</li>
+        </ul>
+      </div>
+    </div>
+    <div class="hair-t mt-12 pt-6 flex items-center justify-between text-[12px]" style="color: var(--ink-3)">
+      <div class="mono">MIT · © 2026 · written at night</div>
+      <div class="italic-soft">you sleep. it ships.</div>
+      <div class="mono">v0.4.1 · python 3.11</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  document.querySelectorAll('button, a').forEach(el => {
+    el.addEventListener('click', e => {
+      const href = el.getAttribute('href');
+      if (!href || href === '#') {
+        console.log('[autonomous] clicked:', el.textContent.trim().slice(0, 60));
+      }
+    });
+  });
+</script>
+</body>
+</html>
