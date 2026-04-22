@@ -1,0 +1,25 @@
+{
+  "name": "open-design-remotion-logo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Animated logo variations for the open-design Claude Code skill",
+  "scripts": {
+    "dev": "remotion studio",
+    "studio": "remotion studio",
+    "build": "remotion bundle",
+    "render": "remotion render",
+    "render:all": "remotion render LogoEditorial && remotion render LogoMarkWordmark && remotion render LogoKinetic"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.410",
+    "@remotion/google-fonts": "4.0.410",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "remotion": "4.0.410"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.0",
+    "@types/react-dom": "19.0.0",
+    "typescript": "5.7.2"
+  }
+}

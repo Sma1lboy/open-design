@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+out/
+.cache/
+*.log
+.remotion/
+previews/check-*.png
