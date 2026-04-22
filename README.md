@@ -102,18 +102,29 @@ The `.html` file is the only source of truth. There are no patches, no diffs, an
 > [!TIP]
 > Keep the file under git. Each change is then a normal git diff, and you can roll back at any time.
 
-### Use real code or images as reference
+### Use references
 
-You can feed the skill real context. Claude Code is already the import pipeline:
+You can point the skill at real stuff to match. Claude Code is already the import pipeline.
 
-- Paste a JSON config, schema, or code snippet. The design will use the real fields.
-- Type `@path/to/file.ts` to pull a file in.
-- `cd` into a repo before you start. The skill can read the code.
-- Drag a screenshot into the terminal. The design will match the visual reference.
+**Reference a website.** Paste a URL. Claude fetches the page and uses it as a style source.
+
+```
+design a pricing page for DevSync. match the visual tone of https://linear.app
+```
+
+**Reference a repo.** Point at a GitHub URL, or `cd` into a local repo before you start.
+
+```
+design a landing page for https://github.com/Sma1lboy/autonomous — read the README for what the product does
+```
+
+**Reference a file.** Use `@path/to/file.ts` to pull a real config, schema, or component in.
 
 ```
 design a settings page for this config: @src/config/schema.ts
 ```
+
+**Reference a screenshot.** Drag an image into the terminal.
 
 ```
 redesign this screen. match the brand but fix the density.
