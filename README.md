@@ -51,14 +51,23 @@ Nothing else.
 
 ## Install
 
-```bash
-git clone https://github.com/Sma1lboy/open-design.git ~/.claude/skills/open-design
+Open Claude Code in any folder. Paste this prompt:
+
+```
+Install the open-design skill for me.
+
+1. Clone https://github.com/Sma1lboy/open-design.git into ~/.claude/skills/open-design
+2. If ~/.claude/skills/open-design already exists, check whether it is the same repo. If yes, run `git pull` there. If it is something else, stop and ask me.
+3. After the clone, list the files in ~/.claude/skills/open-design/open-design to confirm SKILL.md is there.
+4. Tell me to restart Claude Code so the new skill loads.
 ```
 
-You can also clone anywhere and run `./install.sh`. That script makes the symlink for you. It also checks for a stale symlink.
+Claude will do the clone, verify the layout, and remind you to restart.
 
 > [!NOTE]
-> Restart Claude Code after install. Claude Code loads new skills when a session starts.
+> Restart Claude Code after install. Claude Code only loads skills when a session starts.
+
+Prefer to run it yourself? Clone the repo into `~/.claude/skills/open-design`, or clone anywhere and run `./install.sh` to make the symlink.
 
 ---
 
