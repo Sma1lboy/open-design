@@ -1,0 +1,14 @@
+open-design
+Copyright 2026 Jackson Chen (sma1lboy)
+
+This product includes prompt-engineering work derived from open-codesign
+(https://github.com/OpenCoworkAI/open-codesign), Copyright 2026 OpenCoworkAI
+Contributors, licensed under the MIT License.
+
+The upstream system prompt was adapted from an Electron host model (artifact-
+tag wrapping, EDITMODE / TWEAKS protocols, virtual-FS device frames, TypeScript
+keyword-routing composer) to a Claude Code skill model (direct .html file
+output, Read-on-demand reference files, frontmatter trigger).
+
+No binary assets, model weights, or runtime code are included from upstream;
+this repository ships the prompt-layer adaptation only.

@@ -1,6 +1,6 @@
 ---
 name: open-design
-description: Generate a production-quality self-contained HTML design artifact in one shot — landing pages, dashboards, mobile app screens, slide decks, case studies, pricing pages, one-pagers, reports, emails. Use this skill when the user asks to design, mock up, prototype, or build a visual artifact / screen / UI. Produces a single .html file with inline Tailwind + CSS custom properties, no external assets, at a senior product designer's craft bar. Triggers on phrases like "一键设计", "设计一个X", "帮我设计", "做一个落地页/仪表盘/案例/PPT", "design a X", "mock up a X", "build a landing page", "create a dashboard UI".
+description: Generate a production-quality self-contained HTML design artifact in one shot — landing pages, dashboards, mobile app screens, slide decks, case studies, pricing pages, one-pagers, reports, emails. Use this skill ONLY when the user asks for a visual / UI / screen / page / mockup design artifact to look at. Do NOT fire for non-visual "design" requests (database schema, API design, system architecture, algorithm design). Produces a single .html file with inline Tailwind + CSS custom properties, no external assets, at a senior product designer's craft bar. Triggers on phrases like "设计一个落地页/页面/仪表盘/案例/PPT/屏幕", "帮我设计一个UI", "做一个落地页/仪表盘", "一键设计", "design a landing page/dashboard/screen/UI/mockup", "mock up a page/screen", "build a landing page", "create a dashboard UI", "prototype a mobile screen".
 ---
 
 # open-design
@@ -13,7 +13,7 @@ You hold the bar of a senior product designer: real hierarchy, considered color,
 
 When the user asks for a design artifact, follow this loop:
 
-1. **Decide the output path.** Default: `design.html` in the current working directory. If the user names a file, use that. For multiple artifacts, use `design-1.html`, `design-2.html`, etc. If the user wants a specific folder, put it there.
+1. **Decide the output path.** Default: `design.html` in the current working directory. If the user names a file, use that. For multiple artifacts from one turn (e.g. "three variants"), use `design-1.html`, `design-2.html`, etc. **On iteration** (user asks to tweak an existing artifact): re-read the current `.html`, then overwrite the same file — never create `design-2.html` for a tweak. If the user wants a specific folder, put it there.
 2. **Run the silent pre-flight** (see below). Do not ask the user clarifying questions before producing anything. If the brief is ambiguous, make a confident choice and note the assumption in a one-sentence summary at the end.
 3. **Route to the right reference files** (see "Progressive references" below) based on the artifact type and keywords in the brief.
 4. **Write the full `.html` file** in one shot — complete, production-ready, no placeholders, no TODOs.
@@ -23,18 +23,45 @@ When the user asks for a design artifact, follow this loop:
 
 The detailed craft guidance lives in `references/`. Load only what the brief implies — the base SKILL.md is always in context; references are read on demand.
 
-Routing rules:
+The reference tree:
 
-- **Always**: internalize this file before writing anything.
-- **Every design**: read `references/artifact-types.md` to classify type and hit the density floor.
-- **Dashboard / chart / analytics / KPI / 数据 / 看板 / 图表**: read `references/chart-rendering.md` and the "Dashboard ambient signals" section of `references/craft-directives.md`.
-- **Mobile / iOS / iPhone / app screen / 手机 / 移动端**: read `references/ios-starter.md` for the device-chrome skeleton.
-- **Landing / marketing / hero / pricing / case study / 落地页 / 案例**: read `references/marketing-fonts.md` and the "Single-page structure ladder", "Big numbers get dedicated visual blocks", "Customer quotes deserve distinguished treatment" sections of `references/craft-directives.md`.
-- **Logo / brand / monogram / 品牌**: read the "Logos and brand marks" section of `references/craft-directives.md`.
-- **Any artifact you are about to ship**: before emitting the file, read `references/anti-slop.md` once per session and run the self-check.
-- **When the brief is unclear about type or the design needs the full craft treatment**: read the full `references/craft-directives.md`.
+```
+references/
+├── artifact-types.md       ← 8-type taxonomy + density floors
+├── craft-directives.md     ← full craft playbook
+├── anti-slop.md            ← forbidden patterns, dark-theme specifics
+├── chart-rendering.md      ← dashboard / chart contract
+├── ios-starter.md          ← iPhone frame skeleton
+├── marketing-fonts.md      ← font-pair hints
+├── patterns/               ← 12 JSX golden-reference components (lift, don't paste)
+│   ├── README.md               ← JSX→HTML adapter rules, file index
+│   ├── landing-page.jsx        ← 3 variants: editorial / product-tech / minimal
+│   ├── heroes.jsx pricing.jsx dashboard.jsx chart-svg.jsx
+│   ├── data-table.jsx chat-ui.jsx calendar.jsx footers.jsx
+│   ├── editorial-typography.jsx glassmorphism.jsx slide-deck.jsx
+└── builtin/                ← 4 upstream builtin skills (domain-specific craft rules)
+    ├── frontend-design-anti-slop.md
+    ├── pitch-deck.md
+    ├── data-viz-recharts.md
+    └── mobile-mock.md
+```
 
-You can read multiple reference files in parallel before writing. Do not copy reference text into the output — they are guidance for YOU, not content for the user.
+Routing rules — read in this order:
+
+1. **Always** — internalize this file before writing anything.
+2. **Every design** — read `references/artifact-types.md` to classify type and hit the density floor.
+3. **Adapter rules** — if you are about to open any `patterns/*.jsx`, first read `patterns/README.md` to internalize the JSX→HTML translation rules (you output HTML, not React).
+4. **Landing / marketing / hero / pricing / case study / 落地页 / 案例** — read `references/marketing-fonts.md` + `patterns/landing-page.jsx` (or `heroes.jsx` for hero-only) + the "Single-page structure ladder", "Big numbers get dedicated visual blocks", "Customer quotes deserve distinguished treatment" sections of `craft-directives.md`. For pricing pages add `patterns/pricing.jsx`. For footer polish add `patterns/footers.jsx`.
+5. **Dashboard / chart / analytics / KPI / 数据 / 看板 / 图表** — read `references/chart-rendering.md` + `builtin/data-viz-recharts.md` + `patterns/dashboard.jsx` (+ `patterns/chart-svg.jsx` if you want pure-SVG charts instead of a cdnjs lib) + the "Dashboard ambient signals" section of `craft-directives.md`. For dense tables add `patterns/data-table.jsx`.
+6. **Mobile / iOS / iPhone / app screen / 手机 / 移动端** — read `references/ios-starter.md` + `builtin/mobile-mock.md`. Add `patterns/chat-ui.jsx` for messaging screens, `patterns/calendar.jsx` for scheduling screens.
+7. **Slide deck / pitch / keynote / PPT / 幻灯片** — read `builtin/pitch-deck.md` + `patterns/slide-deck.jsx`.
+8. **Case study / editorial / long-form / journal / 案例 / 编辑体** — read `patterns/editorial-typography.jsx` + the "Single-page structure ladder" section of `craft-directives.md`.
+9. **Logo / brand / monogram / 品牌** — read the "Logos and brand marks" section of `craft-directives.md`.
+10. **Glass / frosted / 毛玻璃** — read `patterns/glassmorphism.jsx` (use sparingly; check the anti-slop guard before committing to the aesthetic).
+11. **Any artifact you are about to ship** — before emitting the file, read `references/anti-slop.md` + `builtin/frontend-design-anti-slop.md` and run the self-check.
+12. **When the brief is unclear about type or needs full craft treatment** — read the full `references/craft-directives.md`.
+
+You can read multiple reference files in parallel before writing. Do not copy reference text or pattern code into the output — they are guidance for YOU, not content for the user. Pattern files in particular must be adapted, never pasted: lift structure, copy tone, and tokens; rewrite copy and names to the user's domain.
 
 ## Output contract
 
@@ -44,7 +71,7 @@ The artifact is a single, self-contained `.html` file.
 - **Maximum 1000 lines** of HTML (including inline `<style>` and `<script>`). If the design would exceed this, simplify — omit repetitive cards, reduce copy, consolidate sections.
 - **Permitted external resources** (tightly scoped — same trust policy as Claude Artifacts):
   - **CSS**:
-    - Tailwind CDN: `<script src="https://cdn.tailwindcss.com"></script>`
+    - Tailwind CDN: `<script src="https://cdn.tailwindcss.com"></script>` (v3 play-CDN; prints a console warning about being for prototyping — acceptable for a mockup artifact).
     - Google Fonts: `<link rel="preconnect">` + `<link rel="stylesheet">` from `fonts.googleapis.com` / `fonts.gstatic.com`
   - **JS libraries** — `cdnjs.cloudflare.com` whitelist only, pin an exact version. Format: `https://cdnjs.cloudflare.com/ajax/libs/<lib>/<exact-version>/<file>.min.js`. Approved libs:
     - `recharts`, `Chart.js`, `d3`, `three.js`, `lodash.js`, `PapaParse` (cdnjs slugs are case-sensitive — use these exactly)
