@@ -1,8 +1,8 @@
 # remotion-logo
 
-Three animated logo variations for the `open-design` Claude Code skill, built as a Remotion project.
+Three animated logomark variations for the `open-design` Claude Code skill, built as a Remotion project.
 
-Each composition is 1080×1080, 30fps, 3 seconds.
+Pure marks — no wordmark, no text. Each composition is 512×512, 30fps, 3 seconds. Favicon-capable sizing.
 
 ## Run
 
@@ -11,20 +11,20 @@ bun install
 bunx remotion studio
 ```
 
-Pick a composition from the sidebar. Render individually:
+Render individually:
 
 ```bash
-bunx remotion render LogoEditorial   out/editorial.mp4
-bunx remotion render LogoMarkWordmark out/mark-wordmark.mp4
-bunx remotion render LogoKinetic      out/kinetic.mp4
+bunx remotion render MarkAperture previews/aperture.mp4
+bunx remotion render MarkLens     previews/lens.mp4
+bunx remotion render MarkLoop     previews/loop.mp4
 ```
 
 ## Variations
 
-1. `LogoEditorial` — magazine masthead. Italic serif `open` types in above a sans `design` lockup, wrapped in a drawing-in hairline frame, with print-cover runners top and bottom. Typography is the logo.
-2. `LogoMarkWordmark` — aperture mark + wordmark. A three-petal SVG aperture draws on, a dot punches in as the eye, then the `open—design` wordmark slides in to the right with tagline.
-3. `LogoKinetic` — kinetic / deconstructed. Letters fly in from scattered offsets and snap into place, a mono ghost overprint shimmers behind, an amber highlighter sweeps across at the drop, and a terminal ticker prints the tagline.
+1. `MarkAperture` — rounded square with a circular bite at the upper-right, revealed by a single diagonal sweep.
+2. `MarkLens` — thick ring with a centered dot (camera lens / eye), scales in as one unit.
+3. `MarkLoop` — an enso: a single thick stroke drawn in one gesture that forms an open ring with a small gap at the top.
 
 ## Previews
 
-See `previews/` — one MP4 per variation.
+GIFs (240×240, ~10fps, <250KB each) and MP4s (512×512, 30fps) live under `previews/`.
