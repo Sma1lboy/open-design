@@ -2,7 +2,7 @@
 
 # open-design
 
-> *[open-codesign](https://github.com/OpenCoworkAI/open-codesign), as a Claude Code skill.*
+> *Claude Design, as a Claude Code skill.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Skill-blueviolet)](https://claude.ai/code)
@@ -11,12 +11,10 @@
 
 <br>
 
-**[open-codesign](https://github.com/OpenCoworkAI/open-codesign) is a new design product: you give it a prompt, it gives you a real-looking HTML design.** The upstream ships as an Electron desktop app. This repo is the same product, rebuilt as a Claude Code skill.
-
-Same prompts. Same output quality. No desktop app to install. You use it from any Claude Code session, and `design.html` lands in your current folder.
+**Claude Design is Anthropic's new AI design product: you give it a prompt, it gives you a real-looking HTML design.** This repo is the skill version. You use it from any Claude Code session, and `design.html` lands in your current folder. No desktop app, no web login.
 
 > [!IMPORTANT]
-> **Everything open-codesign can design, this skill can design.** The prompt layer is 100% the same: same 16-section system prompt, same 12 JSX golden-reference examples, same 4 built-in sub-skills, same anti-slop rules, same craft directives. What the Electron app adds is the desktop UX (preview pane, click-to-edit, sliders, PDF export). The design engine is identical.
+> **This is Claude Design, packaged as a skill.** The prompt layer is the open source one from [open-codesign](https://github.com/OpenCoworkAI/open-codesign): same 16-section system prompt, same 12 JSX golden-reference examples, same 4 built-in sub-skills, same anti-slop rules, same craft directives. Run it where you already write code.
 
 <br>
 
@@ -37,9 +35,9 @@ You open it. It looks like a real design, not another template.
 
 ### Credit
 
-All the prompts come from [open-codesign](https://github.com/OpenCoworkAI/open-codesign) (MIT) by OpenCoworkAI Contributors.
+**The product idea — Claude Design — is Anthropic's.** They shipped it recently inside Claude Code. This repo is a skill version of the same idea, so you can run it anywhere Claude Code runs.
 
-They wrote 16 sections of system prompt, 12 JSX examples, and 4 small sub-skills. Every taste call is theirs.
+**The prompts come from [open-codesign](https://github.com/OpenCoworkAI/open-codesign)** (MIT) by OpenCoworkAI Contributors. They wrote 16 sections of system prompt, 12 JSX examples, and 4 small sub-skills. Every taste call is theirs.
 
 I did three things:
 
