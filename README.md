@@ -11,10 +11,10 @@
 
 <br>
 
-**Claude Design is Anthropic's web product for AI design: you type a prompt, it gives you a real-looking HTML design.** The web UI is fine, but most of us already live in Claude Code. This repo gives you the same thing as a skill — `design.html` lands in your current folder, no browser tab, no copy-paste.
+**Claude Design is Anthropic's web product for AI design: you type a prompt, it gives you a real-looking HTML design.** The web UI is fine, but most of us already live in Claude Code. This repo gives you the same thing as a skill — `design.html` lands in your current folder, no browser tab, no copy-paste. **And because it runs where your code lives, it does one thing the web product can't: point it at a real project and it reviews and refactors that project's actual UI, with the same taste.**
 
 > [!IMPORTANT]
-> **This is Claude Design, packaged as a skill.** The prompt layer comes from [open-codesign](https://github.com/OpenCoworkAI/open-codesign), an open source Electron clone (MIT) that reverse-engineered the Claude Design prompts. This repo takes those prompts and wires them into Claude Code so you can run them from the CLI. Same 16-section system prompt, same 12 JSX golden-reference examples, same 4 built-in sub-skills, same anti-slop rules, same craft directives. Run it where you already write code.
+> **This is Claude Design, packaged as a skill.** The prompt layer comes from [open-codesign](https://github.com/OpenCoworkAI/open-codesign), an open source Electron clone (MIT) that reverse-engineered the Claude Design prompts. This repo takes those prompts and wires them into Claude Code so you can run them from the CLI. Same 16-section system prompt, same 12 JSX golden-reference examples, same 4 built-in sub-skills, same anti-slop rules, same craft directives. On top of that sits one layer of our own: **project mode**, which applies the same craft bar to a real codebase instead of a mockup.
 
 <br>
 
@@ -39,11 +39,12 @@ You open it. It looks like a real design, not another template.
 
 **The prompts come from [open-codesign](https://github.com/OpenCoworkAI/open-codesign)** (MIT) by OpenCoworkAI Contributors. Their Electron app reverse-engineered the Claude Design prompts and shipped them as open source. Every taste call is theirs — 16 sections of system prompt, 12 JSX examples, 4 small sub-skills.
 
-I did three things:
+I did four things:
 
 - Pulled the prompts out of their Electron app.
 - Removed the parts that only work inside a desktop window.
 - Wrote a short guide so Claude can turn their JSX examples into HTML.
+- Added project mode — start or refactor a real codebase's UI with the same rules. This layer is mine, not upstream's.
 
 Nothing else.
 
@@ -131,6 +132,31 @@ redesign this screen. match the brand but fix the density.
 [drag screenshot]
 ```
 
+### Refactor a real project's UI (project mode)
+
+`cd` into your project and ask:
+
+```
+重构这个项目的 UI
+```
+
+```
+refactor my app's UI — the dashboard pages look generic
+```
+
+```
+this project has no frontend yet. start the UI.
+```
+
+Project mode works differently from the mockup path:
+
+1. **It reads first.** Framework, styling system, existing tokens, component conventions, i18n. No direction is proposed before the code is read.
+2. **It asks once, with real options.** One structured question round (via Claude Code's option picker): 3 concrete design directions grounded in *your* codebase, plus scope. Pick, then it works autonomously.
+3. **It edits your real files**, in your project's own idiom — extending your tokens and components, not building a parallel system.
+4. **It verifies with whatever you have.** Browser automation available → dev server + before/after screenshots. Otherwise → your own build/typecheck. Otherwise → it starts the dev server and asks you to look.
+
+Nothing is committed unless you ask.
+
 ### What triggers the skill
 
 Triggers that fire:
@@ -140,6 +166,7 @@ Triggers that fire:
 - `mock up a mobile screen for …`
 - `build a slide deck about …`
 - `设计一个 落地页 / 仪表盘 / 案例 / 定价页`
+- `重构这个项目的 UI` / `refactor my app's UI` / `restyle this project` (project mode)
 
 Triggers that do **not** fire:
 
@@ -175,7 +202,7 @@ python3 -m http.server 8787
 
 ## What the output is not
 
-This skill writes a design mockup. It does not write a real app. So:
+In artifact mode, this skill writes a design mockup, not a real app. (Project mode is the exception — there it edits your real source files.) So for mockups:
 
 - One `.html` file. No `style.css`, no `app.js`, no build step.
 - Inline SVG, CSS gradients, or data URIs only. No hotlinked images.
@@ -198,6 +225,7 @@ open-codesign is the open source Electron app that reverse-engineered the Claude
 | Save many designs | ⚠️ one at a time | ✅ `design-1.html`, `design-2.html`, … |
 | Import real code as reference | ✅ (GitHub connector) | ✅ (`@file`, `cd` into repo, paste any text) |
 | Import screenshots as reference | ✅ | ✅ (drag into Claude Code) |
+| Review + refactor a real codebase's UI | ❌ | ✅ (project mode — edits your source files) |
 | Live preview window | ✅ | ❌ — you run `open design.html` |
 | Click an element and rewrite that part | ✅ | ⚠️ — describe the change in words |
 | Sliders for color or spacing | ✅ | ❌ — every change is a full rewrite |
@@ -266,6 +294,7 @@ open-design-skill/
 │       ├── chart-rendering.md
 │       ├── ios-starter.md
 │       ├── marketing-fonts.md
+│       ├── project-mode.md      # start/refactor a real codebase's UI (our layer)
 │       ├── patterns/*.jsx       # 12 golden references plus a JSX→HTML adapter guide
 │       └── builtin/*.md         # 4 built-in sub-skills
 ├── smoke/                       # example outputs
