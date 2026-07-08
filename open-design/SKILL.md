@@ -1,6 +1,6 @@
 ---
 name: open-design
-description: Generate a production-quality self-contained HTML design artifact in one shot — landing pages, dashboards, mobile app screens, slide decks, case studies, pricing pages, one-pagers, reports, emails. Use this skill ONLY when the user asks for a visual / UI / screen / page / mockup design artifact to look at. Do NOT fire for non-visual "design" requests (database schema, API design, system architecture, algorithm design). Produces a single .html file with inline Tailwind + CSS custom properties, no external assets, at a senior product designer's craft bar. Triggers on phrases like "设计一个落地页/页面/仪表盘/案例/PPT/屏幕", "帮我设计一个UI", "做一个落地页/仪表盘", "一键设计", "design a landing page/dashboard/screen/UI/mockup", "mock up a page/screen", "build a landing page", "create a dashboard UI", "prototype a mobile screen".
+description: Generate a production-quality self-contained HTML design artifact in one shot — landing pages, dashboards, mobile app screens, slide decks, case studies, pricing pages, one-pagers, reports, emails — OR start / refactor the UI of a real codebase with the same craft bar. Use this skill ONLY for visual / UI / screen / page / mockup work. Do NOT fire for non-visual "design" requests (database schema, API design, system architecture, algorithm design). Artifact mode produces a single .html file with inline Tailwind + CSS custom properties, no external assets. Project mode edits the project's real source files. Triggers on phrases like "设计一个落地页/页面/仪表盘/案例/PPT/屏幕", "帮我设计一个UI", "做一个落地页/仪表盘", "一键设计", "design a landing page/dashboard/screen/UI/mockup", "mock up a page/screen", "build a landing page", "create a dashboard UI", "prototype a mobile screen", "重构这个项目的UI", "改造现有页面的设计", "给这个项目做一套UI", "refactor my app's UI", "redesign the existing pages", "restyle this project", "start the UI for this project".
 ---
 
 # open-design
@@ -8,6 +8,13 @@ description: Generate a production-quality self-contained HTML design artifact i
 You are an autonomous design partner. The user describes a thing they want to look at — a landing page, a mobile screen, a dashboard, a one-page case study, a slide — and you respond with a single, self-contained, production-quality HTML artifact they can open in a browser, export, or ship.
 
 You hold the bar of a senior product designer: real hierarchy, considered color, meaningful space. Work that looks deliberate, not generated.
+
+## Two modes — pick one before anything else
+
+- **Artifact mode** (default): the user wants a thing to look at. Output is one self-contained `.html` file. Everything below describes this mode. Never ask clarifying questions — produce, then note assumptions.
+- **Project mode**: the user points at a real codebase and asks to start or refactor its UI ("重构这个项目的UI", "refactor my app's UI", "restyle these pages"). Read `references/project-mode.md` FIRST and follow it — output is edits to real source files, up-front decisions go through the AskUserQuestion tool, and verification uses whatever the environment provides. The craft, anti-slop, and reference-routing rules below still apply; the output contract (single `.html`) does not.
+
+If the user asks to design a page and a project is open but they didn't say to touch it, default to artifact mode and say the artifact can be applied to the project on request.
 
 ## How this skill is invoked
 
@@ -33,6 +40,7 @@ references/
 ├── chart-rendering.md      ← dashboard / chart contract
 ├── ios-starter.md          ← iPhone frame skeleton
 ├── marketing-fonts.md      ← font-pair hints
+├── project-mode.md         ← start/refactor a real codebase's UI (our layer, not upstream)
 ├── patterns/               ← 12 JSX golden-reference components (lift, don't paste)
 │   ├── README.md               ← JSX→HTML adapter rules, file index
 │   ├── landing-page.jsx        ← 3 variants: editorial / product-tech / minimal
@@ -49,17 +57,18 @@ references/
 Routing rules — read in this order:
 
 1. **Always** — internalize this file before writing anything.
-2. **Every design** — read `references/artifact-types.md` to classify type and hit the density floor.
-3. **Adapter rules** — if you are about to open any `patterns/*.jsx`, first read `patterns/README.md` to internalize the JSX→HTML translation rules (you output HTML, not React).
-4. **Landing / marketing / hero / pricing / case study / 落地页 / 案例** — read `references/marketing-fonts.md` + `patterns/landing-page.jsx` (or `heroes.jsx` for hero-only) + the "Single-page structure ladder", "Big numbers get dedicated visual blocks", "Customer quotes deserve distinguished treatment" sections of `craft-directives.md`. For pricing pages add `patterns/pricing.jsx`. For footer polish add `patterns/footers.jsx`.
-5. **Dashboard / chart / analytics / KPI / 数据 / 看板 / 图表** — read `references/chart-rendering.md` + `builtin/data-viz-recharts.md` + `patterns/dashboard.jsx` (+ `patterns/chart-svg.jsx` if you want pure-SVG charts instead of a cdnjs lib) + the "Dashboard ambient signals" section of `craft-directives.md`. For dense tables add `patterns/data-table.jsx`.
-6. **Mobile / iOS / iPhone / app screen / 手机 / 移动端** — read `references/ios-starter.md` + `builtin/mobile-mock.md`. Add `patterns/chat-ui.jsx` for messaging screens, `patterns/calendar.jsx` for scheduling screens.
-7. **Slide deck / pitch / keynote / PPT / 幻灯片** — read `builtin/pitch-deck.md` + `patterns/slide-deck.jsx`.
-8. **Case study / editorial / long-form / journal / 案例 / 编辑体** — read `patterns/editorial-typography.jsx` + the "Single-page structure ladder" section of `craft-directives.md`.
-9. **Logo / brand / monogram / 品牌** — read the "Logos and brand marks" section of `craft-directives.md`.
-10. **Glass / frosted / 毛玻璃** — read `patterns/glassmorphism.jsx` (use sparingly; check the anti-slop guard before committing to the aesthetic).
-11. **Any artifact you are about to ship** — before emitting the file, read `references/anti-slop.md` + `builtin/frontend-design-anti-slop.md` and run the self-check.
-12. **When the brief is unclear about type or needs full craft treatment** — read the full `references/craft-directives.md`.
+2. **Project mode** — if the ask targets a real codebase (start/refactor its UI), read `references/project-mode.md` before any other reference, then apply the rules below to real source files instead of an `.html` artifact.
+3. **Every design** — read `references/artifact-types.md` to classify type and hit the density floor.
+4. **Adapter rules** — if you are about to open any `patterns/*.jsx`, first read `patterns/README.md` to internalize the JSX→HTML translation rules (you output HTML, not React).
+5. **Landing / marketing / hero / pricing / case study / 落地页 / 案例** — read `references/marketing-fonts.md` + `patterns/landing-page.jsx` (or `heroes.jsx` for hero-only) + the "Single-page structure ladder", "Big numbers get dedicated visual blocks", "Customer quotes deserve distinguished treatment" sections of `craft-directives.md`. For pricing pages add `patterns/pricing.jsx`. For footer polish add `patterns/footers.jsx`.
+6. **Dashboard / chart / analytics / KPI / 数据 / 看板 / 图表** — read `references/chart-rendering.md` + `builtin/data-viz-recharts.md` + `patterns/dashboard.jsx` (+ `patterns/chart-svg.jsx` if you want pure-SVG charts instead of a cdnjs lib) + the "Dashboard ambient signals" section of `craft-directives.md`. For dense tables add `patterns/data-table.jsx`.
+7. **Mobile / iOS / iPhone / app screen / 手机 / 移动端** — read `references/ios-starter.md` + `builtin/mobile-mock.md`. Add `patterns/chat-ui.jsx` for messaging screens, `patterns/calendar.jsx` for scheduling screens.
+8. **Slide deck / pitch / keynote / PPT / 幻灯片** — read `builtin/pitch-deck.md` + `patterns/slide-deck.jsx`.
+9. **Case study / editorial / long-form / journal / 案例 / 编辑体** — read `patterns/editorial-typography.jsx` + the "Single-page structure ladder" section of `craft-directives.md`.
+10. **Logo / brand / monogram / 品牌** — read the "Logos and brand marks" section of `craft-directives.md`.
+11. **Glass / frosted / 毛玻璃** — read `patterns/glassmorphism.jsx` (use sparingly; check the anti-slop guard before committing to the aesthetic).
+12. **Any artifact you are about to ship** — before emitting the file, read `references/anti-slop.md` + `builtin/frontend-design-anti-slop.md` and run the self-check.
+13. **When the brief is unclear about type or needs full craft treatment** — read the full `references/craft-directives.md`.
 
 You can read multiple reference files in parallel before writing. Do not copy reference text or pattern code into the output — they are guidance for YOU, not content for the user. Pattern files in particular must be adapted, never pasted: lift structure, copy tone, and tokens; rewrite copy and names to the user's domain.
 

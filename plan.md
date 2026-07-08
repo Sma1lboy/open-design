@@ -159,3 +159,24 @@ Upstream files intentionally **not** pulled in:
 
 User must run the 6-prompt smoke test before pushing to GitHub. `make smoke` prints the prompt list.
 
+---
+
+## v0.2 direction: project mode — start + refactor a real codebase's UI (2026-07-08, user-driven)
+
+Repositioning: the skill grows a second mode. Artifact mode (upstream-derived, one-shot `.html`) stays as-is; **project mode** reads an existing codebase and starts or refactors its real UI with the same craft bar. This layer is ours — not derived from open-codesign, so it lives outside the upstream-sync surface (`references/project-mode.md` + the mode fork in SKILL.md).
+
+Decisions locked with user:
+
+1. **Prompt/template layer stays upstream-pinned.** All taste content (16-section prompt, 12 JSX patterns, 4 builtins) keeps tracking `OpenCoworkAI/open-codesign` via `.upstream-sha` / `make upstream-check`. No local forks of upstream prose.
+2. **All up-front questioning goes through the AskUserQuestion tool** — one batched call (direction pick from 3 concrete options, scope, max 4 questions), never prose questions. Artifact mode keeps its never-ask rule; project mode asks once because real-code edits are consequential.
+3. **Verification adapts to what the user's environment has**, strongest-first: browser-automation skill/MCP (dev server + before/after screenshots + console) → project's own build/lint/typecheck → dev server URL + AskUserQuestion visual confirm. Never hard-depend on any one tool.
+
+Competitive scan (2026-07-08): `jiji262/claude-design-skill` is same-lineage (Claude Design prompt port) but artifact-only — worth borrowing its flow engineering (fact-verification priority #0, direction-advisor, verification.md, test-prompts.json, skills.sh distribution). `freshtechbro/claudedesignskills` is a 22-skill library marketplace (Three.js/GSAP/…), different layer, not a competitor — its plugin-marketplace packaging is a distribution reference. Our niche: upstream-pinned prompts + the project mode neither has.
+
+Done this session: `references/project-mode.md` written; SKILL.md mode fork + routing rule 2 + frontmatter triggers (zh+en refactor phrases); branch `ui-refactor-mode`.
+
+Next (v0.2 remaining):
+- Smoke-test project mode on a real repo (e.g. a Next.js side project): trigger fires, AskUserQuestion flow, batch edits, verification fallback chain.
+- Port `test-prompts.json` idea: scenario cases covering both modes.
+- Consider skills.sh listing for distribution.
+
